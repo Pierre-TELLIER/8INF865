@@ -1,3 +1,23 @@
 <resources>
     <string name="app_name">Izondevices</string>
+    <string name="scan">Scan</string>
+    <string name="scan_in_progress">Scan en cours</string>
+    <string name="cancel">Annuler</string>
+    <string name="device_info_title">Appareil 1</string>
+    <string name="vulnerabilities_detected"># Vulnérabilités détectées</string>
+    <string name="ip_address">Adresse IP</string>
+    <string name="name_label">Nom</string>
+    <string name="type_label">Type</string>
+    <string name="vulnerabilities_label">Vulnerabilités</string>
+    <string name="actions_label">Actions</string>
+    <string name="ping_label">Ping</string>
+    <string name="port_scan_label">Port scan</string>
+    <string name="vulnerability_title">Vulnérabilité 1</string>
+    <string name="description_label">Description</string>
+    <string name="remediation_label">Remédiation</string>
+    <string name="details_label">Détails</string>
+    <string name="parameters_title">Paramètres</string>
+    <string name="history_scans_title">Historique des scans</string>
+    <string name="network_title">Réseau 1</string>
+    <string name="reseau_label">Réseau</string>
 </resources>
