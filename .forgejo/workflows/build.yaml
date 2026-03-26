@@ -22,10 +22,10 @@ jobs:
 
 
       - name: Build with Gradle
-        run: ./gradlew assembleDebug
+        run: ./gradlew assemble
 
       - name: Upload APK Debug 
         uses: actions/upload-artifact@v3
         with:
           name: release.apk
-          path: ${{ env.main_project_module }}/build/outputs/apk/debug/
+          path: ${{ env.main_project_module }}/build/outputs/apk/release/app-release-unsigned.apk
