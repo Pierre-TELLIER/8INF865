@@ -20,9 +20,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-
+      - name: Cache Gradle Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+      
       - name: Build with Gradle
-        run: ./gradlew assemble
+        run: ./gradlew assemble --parallel --build-cache --no-daemon
 
       - name: Upload APK Debug 
         uses: actions/upload-artifact@v3
