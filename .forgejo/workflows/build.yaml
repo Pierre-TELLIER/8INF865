@@ -1,3 +1,18 @@
+name: Generated APK AAB (Upload - Create Artifact To Github Action)
+
+env:
+  # The name of the main module repository
+  main_project_module: app
+
+on:
+  push:
+    branches:
+      - '*'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+
 jobs:
   build:
     runs-on: docker # or your specific runner label
