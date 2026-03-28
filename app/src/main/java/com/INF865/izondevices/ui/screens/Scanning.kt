@@ -46,14 +46,14 @@ import com.INF865.izondevices.R
 import com.INF865.izondevices.model.Network
 import com.INF865.izondevices.model.NetworkDevice
 import com.INF865.izondevices.service.NetworkScanService
-import com.INF865.izondevices.ui.ScanStatusItem
-import com.INF865.izondevices.ui.hasRequiredPermissions
+import com.INF865.izondevices.ui.theme.border_thickness
 import com.INF865.izondevices.ui.theme.button_height
 import com.INF865.izondevices.ui.theme.extra_small_space
 import com.INF865.izondevices.ui.theme.giant_space
 import com.INF865.izondevices.ui.theme.large_space
 import com.INF865.izondevices.ui.theme.large_text
 import com.INF865.izondevices.ui.theme.medium_large_text
+import com.INF865.izondevices.ui.theme.medium_small_text
 import com.INF865.izondevices.ui.theme.medium_space
 import com.INF865.izondevices.ui.theme.medium_text
 import com.INF865.izondevices.ui.theme.mega_space
@@ -239,5 +239,32 @@ fun ScanScreen(
                 }
             }
         }
+    }
+}
+
+fun hasRequiredPermissions(context: Context, permissions: Array<String>): Boolean {
+    return permissions.all { permission ->
+        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+    }
+}
+
+@Composable
+fun ScanStatusItem(
+    modifier: Modifier = Modifier,
+    text: String,
+    backgroundColor: Color = Color.Gray
+) {
+    Surface(
+        color = backgroundColor,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = border_thickness)
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            modifier = Modifier.padding(horizontal = medium_space, vertical = extra_small_space),
+            fontSize = medium_small_text
+        )
     }
 }

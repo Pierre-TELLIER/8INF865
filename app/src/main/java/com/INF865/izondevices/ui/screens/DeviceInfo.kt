@@ -21,12 +21,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,8 +54,6 @@ import com.INF865.izondevices.scanner.LAST_PORT
 import com.INF865.izondevices.scanner.pingDevice
 import com.INF865.izondevices.scanner.PortScanProgress
 import com.INF865.izondevices.service.PortScanService
-import com.INF865.izondevices.ui.ActionButton
-import com.INF865.izondevices.ui.VulnerabilityItem
 import com.INF865.izondevices.ui.theme.*
 import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
@@ -295,5 +297,55 @@ fun DeviceInfoScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun VulnerabilityItem(modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(elevation_none),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Column {
+            HorizontalDivider(color = Color.LightGray)
+            Row(
+                modifier = Modifier
+                    .padding(vertical = small_medium_space)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(text = "Nom", color = Color.Gray)
+                    Box(
+                        modifier = Modifier
+                            .width(bar_width_small)
+                            .height(small_space)
+                            .background(Color.LightGray)
+                    )
+                }
+                Icon(painterResource(id = R.drawable.ic_chevron_right), contentDescription = null)
+            }
+        }
+    }
+}
+
+@Composable
+fun ActionButton(
+    modifier: Modifier = Modifier,
+    text: String,
+    onClick: () -> Unit = { },
+    backgroundColor: Color = Color.White
+) {
+    OutlinedButton(
+        onClick = onClick,
+        shape = RoundedCornerShape(small_medium_space),
+        modifier = modifier
+            .height(huge_space)
+            .background(backgroundColor, shape = RoundedCornerShape(small_medium_space))
+    ) {
+        Text(text = text, color = Color.Black)
     }
 }
