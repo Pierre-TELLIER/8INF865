@@ -20,8 +20,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -695,7 +697,7 @@ fun ScanScreen(modifier: Modifier = Modifier, onCancel: () -> Unit = {}) {
 
         Spacer(modifier = Modifier.height(giant_space))
 
-        Box(modifier = Modifier.size(bar_width_large), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             if (isScanning) {
                 CircularProgressIndicator(color = Color.Gray, strokeWidth = tiny_space)
             } else {
@@ -731,7 +733,7 @@ fun ScanScreen(modifier: Modifier = Modifier, onCancel: () -> Unit = {}) {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState()).fillMaxWidth()) {
             if (errorMessage != null) {
                 ScanStatusItem(text = errorMessage.orEmpty(), backgroundColor = Color(0xFF9C2F2F))
             } else if (network?.devices?.isEmpty() ?: true && !isScanning) {

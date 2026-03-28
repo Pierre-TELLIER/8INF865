@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.LinkAddress
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.INF865.izondevices.model.Network
@@ -42,35 +43,54 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
                     .take(MAX_HOSTS)
                     .toList()
 
-                // get reachable IPs
+                // create task to check reachable IPs
                 val probeTasks = candidates.map { hostIp ->
-                    probeExecutor.submit<Pair<String, Boolean>> {
+                    probeExecutor.submit<Pair<String, Pair<Boolean, String?>>> {
+                        // create inet instance
+                        val inet = InetAddress.getByName(hostIp)
+                        // capture and throw away an error
                         hostIp to runCatching {
-                            InetAddress.getByName(hostIp).isReachable(PROBE_TIMEOUT_MS)
-                        }.getOrDefault(false)
+                            // check if the hostIp is reachable
+                            // under PROBE_TIMEOUT_MS milliseconds
+                            if (inet.isReachable(PROBE_TIMEOUT_MS)) {
+                                // if it is return Pair<true, hostname>
+                                true to inet.hostName
+                            } else {
+                                // or Pair<false, null>
+                                false to null
+                            }
+                        }.getOrDefault(false to null) // any error case
                     }
                 }
 
                 val arpByIp = readArpTable()
-                val reachableIps = mutableMapOf<String, String?>()
+                val reachableIps = mutableMapOf<String, Pair<String?, String?>>()
 
+                // execute tasks defined earlier
                 probeTasks.forEach { task ->
                     runCatching {
-                        val (ipAddress, reachable) =
+                        // execute task and kill it if it takes more
+                        // than twice the time to check if a host is
+                        // reachable or not
+                        val (ipAddress, data) =
                             task.get(PROBE_TIMEOUT_MS.toLong() * 2, TimeUnit.MILLISECONDS)
+                        // deconstruct data
+                        val (reachable, hostName) = data
+                        // add host to a Map
                         if (reachable) {
                             val macAddress = arpByIp[ipAddress]
-                            reachableIps[ipAddress] = macAddress
+                            reachableIps[ipAddress] = Pair(macAddress, hostName)
                         }
                     }
                 }
 
 
                 val discoveredByIp = linkedMapOf<String, NetworkDevice>()
+                // Map own device as a NetworkDevice
                 discoveredByIp[ownIpAddress] = NetworkDevice(
                     ipAddress = ownIpAddress,
-                    macAddress = resolveOwnMacAddress(subnet.address),
-                    hostname = subnet.address.hostName
+                    macAddress = resolveOwnMacAddress(subnet.address), // Not working ?!
+                    hostname = getHostnameFromNetwork()
                 )
 
                 // sort by ip address
@@ -84,8 +104,8 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
                 remoteIps.forEach { ip ->
                     discoveredByIp[ip] = NetworkDevice(
                         ipAddress = ip,
-                        macAddress = reachableIps[ip],
-                        hostname = resolveHostName(ip)
+                        macAddress = reachableIps[ip]?.first ?: INVALID_MAC,
+                        hostname = reachableIps[ip]?.second ?: "Unknown --"
                     )
                 }
 
@@ -141,10 +161,12 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
     }
 
     private fun buildCandidateIps(localAddress: Inet4Address, prefixLength: Int): List<String> {
+        // weird case, no subnet ?!
         if (prefixLength !in 1..30) {
             return emptyList()
         }
 
+        // transform local pointed decimal ip to int value
         val addressInt = inetAddressToInt(localAddress)
         // construct mask from prefix
         // 255.255.255.0 is the prefix for /24 (example :))
@@ -161,6 +183,7 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
 
         val addresses = mutableListOf<String>()
         for (host in (network + 1) until broadcast) {
+            // retransform int value to pointed decimal ip
             addresses.add(intToIpv4(host))
         }
         return addresses
@@ -172,12 +195,36 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
         }
     }
 
+    fun getHostnameFromNetwork(): String? {
+        return try {
+            NetworkInterface.getNetworkInterfaces()
+                .asSequence()
+                .flatMap { it.inetAddresses.asSequence() }
+                .firstOrNull { !it.isLoopbackAddress && it is java.net.Inet4Address }
+                ?.hostName
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Root function to get entries from ARP table to resolve MAC addresses
+     *
+     * @return Map of IP addresses to MAC addresses
+     */
     private fun readArpTable(): Map<String, String> {
         return runCatching {
+            // if rooted this can work
             execCommand("cat /proc/net/arp")
+                    // drop first line
                     .drop(1)
+                    // split column separated by at least one space
                     .map { it.trim().split(Regex("\\s+")) }
+                    // get only lines that have more than 4 chars
                     .filter { it.size >= 4 }
+                    // get value from first and fourth column
+                    // IP address and MAC address
+                    // check if MAC address is valid or not
                     .mapNotNull { columns ->
                         val ip = columns[0]
                         val mac = columns[3]
@@ -185,12 +232,6 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
                     }
                     .toMap()
         }.getOrDefault(emptyMap())
-    }
-
-    private fun resolveHostName(ipAddress: String): String? {
-        return runCatching {
-            InetAddress.getByName(ipAddress).canonicalHostName
-        }.getOrNull()?.takeUnless { it == ipAddress }
     }
 
     private fun isUsableIpv4LinkAddress(linkAddress: LinkAddress): Boolean {

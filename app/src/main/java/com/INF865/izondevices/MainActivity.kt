@@ -10,7 +10,6 @@ import com.INF865.izondevices.ui.theme.IzondevicesTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        execCommand("ip neigh show").forEach { println(it) }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
