@@ -1,16 +1,7 @@
 package com.INF865.izondevices.ui
 
-import android.Manifest
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
-import android.os.IBinder
-import android.os.Handler
-import android.os.Looper
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
@@ -20,10 +11,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,26 +21,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.core.content.ContextCompat
-import com.INF865.izondevices.model.NetworkDevice
 import com.INF865.izondevices.R
-import com.INF865.izondevices.model.Network
-import com.INF865.izondevices.service.NetworkScanService
+import com.INF865.izondevices.model.NetworkDevice
+import com.INF865.izondevices.ui.screens.DeviceInfoScreen
+import com.INF865.izondevices.ui.screens.ScanScreen
 import com.INF865.izondevices.ui.theme.*
-import java.util.concurrent.CompletableFuture
 
 sealed class NavScreen(val route: String) {
     data object MainMenu : NavScreen("main_menu")
-    data object DeviceInfo : NavScreen("device_info")
+    data object DeviceInfo : NavScreen("device_info/{ip}") {
+        fun createRoute(ip: String) = "device_info/$ip"
+    }
     data object CVE : NavScreen("cve")
     data object Parametres : NavScreen("parametres")
     data object Historique : NavScreen("historique")
@@ -59,15 +51,23 @@ sealed class NavScreen(val route: String) {
 
 @Composable
 fun IzonDevicesApp(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    
+    // Shared state for the latest scan results, persisted in SharedPreferences
+    var latestScanResult by remember { mutableStateOf(loadLatestScan(context)) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = Color(0xFFF9F9FB),
         bottomBar = {
-            if (currentRoute != NavScreen.Scan.route) {
+            if (currentRoute == NavScreen.MainMenu.route || 
+                currentRoute?.startsWith("device_info") == true || 
+                currentRoute == NavScreen.CVE.route ||
+                currentRoute == NavScreen.Parametres.route ||
+                currentRoute == NavScreen.Historique.route) {
                 IzonBottomNavigation(
                     currentRoute = currentRoute,
                     onScreenSelected = { screen ->
@@ -94,15 +94,23 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
         ) {
             composable(NavScreen.MainMenu.route) {
                 MainMenuScreen(
-                    onDeviceClick = { navController.navigate(NavScreen.DeviceInfo.route) },
+                    devices = latestScanResult,
+                    onDeviceClick = { device -> 
+                        navController.navigate(NavScreen.DeviceInfo.createRoute(device.ipAddress)) 
+                    },
                     onScanClick = { navController.navigate(NavScreen.Scan.route) }
                 )
             }
-            composable(NavScreen.DeviceInfo.route) {
-                DeviceInfoScreen(
-                    onBack = { navController.popBackStack() },
-                    onVulnerabilityClick = { navController.navigate(NavScreen.CVE.route) }
-                )
+            composable(NavScreen.DeviceInfo.route) { backStackEntry ->
+                val ip = backStackEntry.arguments?.getString("ip")
+                val device = latestScanResult.find { it.ipAddress == ip }
+                if (device != null) {
+                    DeviceInfoScreen(
+                        device = device,
+                        onBack = { navController.popBackStack() },
+                        onVulnerabilityClick = { navController.navigate(NavScreen.CVE.route) }
+                    )
+                }
             }
             composable(NavScreen.CVE.route) {
                 CVEScreen(
@@ -117,7 +125,12 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
             }
             composable(NavScreen.Scan.route) {
                 ScanScreen(
-                    onCancel = { navController.popBackStack() }
+                    onCancel = { navController.popBackStack() },
+                    onScanFinished = { network ->
+                        latestScanResult = network.devices
+                        saveLatestScan(context, network.devices)
+                        navController.popBackStack()
+                    }
                 )
             }
         }
@@ -126,8 +139,9 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
 
 @Composable
 fun MainMenuScreen(
+    devices: List<NetworkDevice>,
     modifier: Modifier = Modifier,
-    onDeviceClick: () -> Unit = {},
+    onDeviceClick: (NetworkDevice) -> Unit = {},
     onScanClick: () -> Unit = {}
 ) {
     Column(
@@ -156,15 +170,21 @@ fun MainMenuScreen(
 
         Spacer(modifier = Modifier.height(huge_space))
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(grid_spacing),
-            verticalArrangement = Arrangement.spacedBy(grid_spacing),
-            contentPadding = PaddingValues(bottom = medium_space)
-        ) {
-            items(4) {
-                DeviceItem(onClick = onDeviceClick)
+        if (devices.isEmpty()) {
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                Text(text = "Aucun scan récent", color = Color.Gray)
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(grid_spacing),
+                verticalArrangement = Arrangement.spacedBy(grid_spacing),
+                contentPadding = PaddingValues(bottom = medium_space)
+            ) {
+                items(devices) { device ->
+                    DeviceItem(device = device, onClick = { onDeviceClick(device) })
+                }
             }
         }
 
@@ -208,7 +228,11 @@ fun MainMenuScreen(
 }
 
 @Composable
-fun DeviceItem(modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+fun DeviceItem(
+    device: NetworkDevice,
+    modifier: Modifier = Modifier, 
+    onClick: () -> Unit = {}
+) {
     Box(
         modifier = modifier
             .aspectRatio(1f)
@@ -217,154 +241,26 @@ fun DeviceItem(modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
             .padding(large_space),
         contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .border(border_thickness, Color.Gray)
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DeviceInfoScreen(
-    modifier: Modifier = Modifier,
-    onBack: () -> Unit = {},
-    onVulnerabilityClick: () -> Unit = {}
-) {
-    Column(modifier = modifier.fillMaxSize()) {
-        CenterAlignedTopAppBar(
-            title = {
-                Text(
-                    stringResource(id = R.string.device_info_title),
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        painterResource(id = R.drawable.ic_arrow_back),
-                        contentDescription = "Back"
-                    )
-                }
-            },
-            actions = {
-                IconButton(onClick = { }) {
-                    Icon(
-                        painterResource(id = R.drawable.ic_refresh),
-                        contentDescription = "Refresh"
-                    )
-                }
-            }
-        )
-
-        Column(
-            modifier = Modifier
-                .padding(horizontal = medium_space)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Surface(
-                color = Color.DarkGray,
-                shape = RoundedCornerShape(extra_small_space),
-                modifier = Modifier.padding(vertical = small_space)
-            ) {
-                Text(
-                    text = stringResource(id = R.string.vulnerabilities_detected),
-                    color = Color.White,
-                    modifier = Modifier.padding(
-                        horizontal = medium_space,
-                        vertical = extra_small_space
-                    ),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            Text(
-                text = stringResource(id = R.string.ip_address),
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(huge_space)
+                    .border(border_thickness, Color.Gray)
             )
-
-            Spacer(modifier = Modifier.height(medium_space))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(mega_space)
-                        .clip(CircleShape)
-                        .background(Color.LightGray)
-                )
-                Spacer(modifier = Modifier.width(medium_space))
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(id = R.string.name_label))
-                        Spacer(modifier = Modifier.width(extra_small_space))
-                        Icon(
-                            painterResource(id = R.drawable.ic_edit),
-                            contentDescription = null,
-                            modifier = Modifier.size(icon_size_small)
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(id = R.string.type_label))
-                        Spacer(modifier = Modifier.width(extra_small_space))
-                        Icon(
-                            painterResource(id = R.drawable.ic_edit),
-                            contentDescription = null,
-                            modifier = Modifier.size(icon_size_small)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(extra_small_space))
-                    Box(
-                        modifier = Modifier
-                            .width(bar_width_large)
-                            .height(small_space)
-                            .background(Color.LightGray)
-                    )
-                    Spacer(modifier = Modifier.height(extra_small_space))
-                    Box(
-                        modifier = Modifier
-                            .width(bar_width_medium)
-                            .height(small_space)
-                            .background(Color.LightGray)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(large_space))
-
-            Text(
-                text = stringResource(id = R.string.vulnerabilities_label),
-                modifier = Modifier.align(Alignment.Start),
-                style = MaterialTheme.typography.titleSmall
-            )
-
             Spacer(modifier = Modifier.height(small_space))
-
-            VulnerabilityItem(onClick = onVulnerabilityClick)
-            Spacer(modifier = Modifier.height(small_space))
-            VulnerabilityItem(onClick = onVulnerabilityClick)
-
-            Spacer(modifier = Modifier.height(large_space))
-
             Text(
-                text = stringResource(id = R.string.actions_label),
-                modifier = Modifier.align(Alignment.Start),
-                style = MaterialTheme.typography.titleSmall
+                text = device.ipAddress,
+                fontSize = small_text,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
-
-            Spacer(modifier = Modifier.height(medium_space))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                ActionButton(text = stringResource(id = R.string.ping_label))
-                ActionButton(text = stringResource(id = R.string.port_scan_label))
+            device.hostname?.let {
+                Text(
+                    text = it,
+                    fontSize = small_text,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
             }
         }
     }
@@ -403,11 +299,18 @@ fun VulnerabilityItem(modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
 }
 
 @Composable
-fun ActionButton(modifier: Modifier = Modifier, text: String) {
+fun ActionButton(
+    modifier: Modifier = Modifier,
+    text: String,
+    onClick: () -> Unit = { },
+    backgroundColor: Color = Color.White
+) {
     OutlinedButton(
-        onClick = { },
+        onClick = onClick,
         shape = RoundedCornerShape(small_medium_space),
-        modifier = modifier.height(huge_space)
+        modifier = modifier
+            .height(huge_space)
+            .background(backgroundColor, shape = RoundedCornerShape(small_medium_space))
     ) {
         Text(text = text, color = Color.Black)
     }
@@ -575,180 +478,7 @@ fun HistoryItem(modifier: Modifier = Modifier, index: Int) {
     }
 }
 
-@Composable
-fun ScanScreen(modifier: Modifier = Modifier, onCancel: () -> Unit = {}) {
-    val context = LocalContext.current
-    val isPreview = LocalInspectionMode.current
-    val requiredPermissions = remember {
-        arrayOf(
-            Manifest.permission.INTERNET,
-            Manifest.permission.ACCESS_NETWORK_STATE
-        )
-    }
-    var isScanning by remember { mutableStateOf(!isPreview) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var network by remember { mutableStateOf<Network?>(null) }
-    var permissionsGranted by remember {
-        mutableStateOf(hasRequiredPermissions(context, requiredPermissions))
-    }
-    val activeScan = remember { mutableStateOf<CompletableFuture<Network?>?>(null) }
-
-    // check if permissions have been given
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { grantResults ->
-        permissionsGranted = requiredPermissions.all { permission ->
-            grantResults[permission] == true ||
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        permission
-                    ) == PackageManager.PERMISSION_GRANTED
-        }
-        if (!permissionsGranted) {
-            isScanning = false
-            errorMessage = "Internet and network state permissions are required"
-        }
-    }
-
-    LaunchedEffect(isPreview, permissionsGranted) {
-        if (!isPreview && !permissionsGranted) {
-            permissionLauncher.launch(requiredPermissions)
-        }
-    }
-
-    DisposableEffect(context, isPreview, permissionsGranted) {
-        if (isPreview) {
-            network = Network(
-                "192.168.1.0", "Local network", listOf(
-                    NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01"),
-                    NetworkDevice(ipAddress = "192.168.1.20", macAddress = "AA:BB:CC:DD:EE:02")
-                )
-            )
-            isScanning = false
-            onDispose { }
-        } else if (!permissionsGranted) {
-            isScanning = false
-            onDispose { }
-        } else {
-            var isBound = false
-            val connection = object : ServiceConnection {
-                override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                    val binder = service as? NetworkScanService.LocalBinder ?: return
-                    val networkService = binder.getService()
-                    isScanning = true
-                    errorMessage = null
-
-                    val future = networkService.scanNetwork()
-                    activeScan.value = future
-                    future.whenComplete { devices, throwable ->
-                        Handler(Looper.getMainLooper()).post {
-                            isScanning = false
-                            if (throwable != null && !future.isCancelled) {
-                                errorMessage = throwable.message ?: "Scan failed"
-                            } else if (!future.isCancelled) {
-                                network = devices ?: null
-                            }
-                        }
-                    }
-                }
-
-                override fun onServiceDisconnected(name: ComponentName?) {
-                    isBound = false
-                }
-            }
-
-            val serviceIntent = Intent(context, NetworkScanService::class.java)
-            isBound = context.bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
-            if (!isBound) {
-                isScanning = false
-                errorMessage = "Unable to bind scanner service"
-            }
-
-            onDispose {
-                activeScan.value?.cancel(true)
-                if (isBound) {
-                    runCatching { context.unbindService(connection) }
-                }
-            }
-        }
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(medium_space),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Surface(
-            color = Color.DarkGray,
-            shape = RoundedCornerShape(extra_small_space)
-        ) {
-            Text(
-                text = if (isScanning) stringResource(id = R.string.scan_in_progress) else "Scan complete",
-                color = Color.White,
-                modifier = Modifier.padding(
-                    horizontal = large_space,
-                    vertical = small_medium_space
-                ),
-                fontSize = medium_large_text
-            )
-        }
-
-        Spacer(modifier = Modifier.height(giant_space))
-
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            if (isScanning) {
-                CircularProgressIndicator(color = Color.Gray, strokeWidth = tiny_space)
-            } else {
-                Text(
-                    text = "${network?.devices?.size} appareils",
-                    color = Color.Gray,
-                    fontSize = large_text,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(mega_space))
-
-        Button(
-            onClick = {
-                activeScan.value?.cancel(true)
-                onCancel()
-            },
-            modifier = Modifier
-                .fillMaxWidth(0.5f)
-                .height(button_height),
-            shape = RoundedCornerShape(small_medium_space),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
-        ) {
-            Text(
-                text = if (isScanning) stringResource(id = R.string.cancel) else stringResource(R.string.details),
-                color = Color.Black,
-                fontSize = medium_text,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Column(modifier = Modifier.verticalScroll(rememberScrollState()).fillMaxWidth()) {
-            if (errorMessage != null) {
-                ScanStatusItem(text = errorMessage.orEmpty(), backgroundColor = Color(0xFF9C2F2F))
-            } else if (network?.devices?.isEmpty() ?: true && !isScanning) {
-                ScanStatusItem(text = "No devices found")
-            } else {
-                network?.devices?.forEach { device ->
-                    val macLabel = device.macAddress ?: "Unknown MAC"
-                    ScanStatusItem(text = "${device.ipAddress} - $macLabel (${device.hostname ?: "No hostname"})")
-                }
-            }
-        }
-    }
-}
-
-private fun hasRequiredPermissions(context: Context, permissions: Array<String>): Boolean {
+fun hasRequiredPermissions(context: Context, permissions: Array<String>): Boolean {
     return permissions.all { permission ->
         ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
     }
@@ -787,7 +517,9 @@ fun IzonBottomNavigation(
         tonalElevation = elevation_none
     ) {
         NavigationBarItem(
-            selected = currentRoute == NavScreen.MainMenu.route || currentRoute == NavScreen.DeviceInfo.route || currentRoute == NavScreen.CVE.route,
+            selected = currentRoute == NavScreen.MainMenu.route || 
+                       currentRoute?.startsWith("device_info") == true || 
+                       currentRoute == NavScreen.CVE.route,
             onClick = { onScreenSelected(NavScreen.MainMenu) },
             icon = { BottomNavIconPlaceholder(shape = "triangle_up") },
             colors = NavigationBarItemDefaults.colors(
@@ -834,19 +566,26 @@ fun BottomNavIconPlaceholder(modifier: Modifier = Modifier, shape: String) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun MainMenuPreview() {
-    IzondevicesTheme {
-        MainMenuScreen()
+private fun saveLatestScan(context: Context, devices: List<NetworkDevice>) {
+    val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
+    val data = devices.joinToString(";") { "${it.ipAddress},${it.macAddress ?: ""},${it.hostname ?: ""}" }
+    prefs.edit().putString("latest_scan", data).apply()
+}
+
+private fun loadLatestScan(context: Context): List<NetworkDevice> {
+    val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
+    val data = prefs.getString("latest_scan", null) ?: return emptyList()
+    return data.split(";").filter { it.isNotEmpty() }.map {
+        val parts = it.split(",")
+        NetworkDevice(parts[0], parts.getOrNull(1)?.takeIf { it.isNotEmpty() }, parts.getOrNull(2)?.takeIf { it.isNotEmpty() })
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun DeviceInfoPreview() {
+fun MainMenuPreview() {
     IzondevicesTheme {
-        DeviceInfoScreen()
+        MainMenuScreen(devices = emptyList())
     }
 }
 
@@ -871,14 +610,6 @@ fun ParametresPreview() {
 fun HistoriquePreview() {
     IzondevicesTheme {
         HistoriqueScreen()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ScanPreview() {
-    IzondevicesTheme {
-        ScanScreen()
     }
 }
 

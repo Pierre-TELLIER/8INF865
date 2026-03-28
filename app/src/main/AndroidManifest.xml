@@ -28,6 +28,11 @@
             android:name=".service.NetworkScanService"
             android:enabled="true"
             android:exported="false" />
+
+        <service
+            android:name=".service.PortScanService"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>

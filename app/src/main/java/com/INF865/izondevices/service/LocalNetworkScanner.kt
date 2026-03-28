@@ -3,17 +3,14 @@ package com.INF865.izondevices.service
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.LinkAddress
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
-import androidx.core.content.ContextCompat
 import com.INF865.izondevices.model.Network
 import com.INF865.izondevices.model.NetworkDevice
+import com.INF865.izondevices.scanner.*
 import java.io.Closeable
-import java.io.File
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -278,14 +275,6 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
         val prefixLength: Int
     )
 
-    private companion object {
-        const val PROBE_TIMEOUT_MS = 250
-        const val PROBE_THREADS = 32
-        const val DEFAULT_PREFIX_LENGTH = 24
-        const val MAX_HOSTS = 512
-        const val TERMINATION_TIMEOUT_SECONDS = 1L
-        const val INVALID_MAC = "00:00:00:00:00:00"
-    }
 }
 
 class NetworkScanService : Service() {
