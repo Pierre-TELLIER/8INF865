@@ -3,6 +3,7 @@
     <string name="scan">Scan</string>
     <string name="scan_in_progress">Scan en cours</string>
     <string name="cancel">Annuler</string>
+    <string name="details">Voir le détail</string>
     <string name="device_info_title">Appareil 1</string>
     <string name="vulnerabilities_detected"># Vulnérabilités détectées</string>
     <string name="ip_address">Adresse IP</string>

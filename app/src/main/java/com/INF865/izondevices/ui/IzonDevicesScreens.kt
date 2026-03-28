@@ -41,6 +41,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.core.content.ContextCompat
 import com.INF865.izondevices.model.NetworkDevice
 import com.INF865.izondevices.R
+import com.INF865.izondevices.model.Network
 import com.INF865.izondevices.service.NetworkScanService
 import com.INF865.izondevices.ui.theme.*
 import java.util.concurrent.CompletableFuture
@@ -150,7 +151,7 @@ fun MainMenuScreen(
                     .background(Color.Gray)
             )
         }
-        
+
         Spacer(modifier = Modifier.height(huge_space))
 
         LazyVerticalGrid(
@@ -169,12 +170,20 @@ fun MainMenuScreen(
 
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Gray, thickness = divider_thickness)
+                HorizontalDivider(
+                    modifier = Modifier.weight(1f),
+                    color = Color.Gray,
+                    thickness = divider_thickness
+                )
                 Spacer(modifier = Modifier.width(grid_spacing))
-                HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Gray, thickness = divider_thickness)
+                HorizontalDivider(
+                    modifier = Modifier.weight(1f),
+                    color = Color.Gray,
+                    thickness = divider_thickness
+                )
             }
             Spacer(modifier = Modifier.height(extra_large_space))
-            
+
             Button(
                 onClick = onScanClick,
                 modifier = Modifier
@@ -223,15 +232,26 @@ fun DeviceInfoScreen(
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         CenterAlignedTopAppBar(
-            title = { Text(stringResource(id = R.string.device_info_title), fontWeight = FontWeight.Bold) },
+            title = {
+                Text(
+                    stringResource(id = R.string.device_info_title),
+                    fontWeight = FontWeight.Bold
+                )
+            },
             navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Icon(painterResource(id = R.drawable.ic_arrow_back), contentDescription = "Back")
+                    Icon(
+                        painterResource(id = R.drawable.ic_arrow_back),
+                        contentDescription = "Back"
+                    )
                 }
             },
             actions = {
                 IconButton(onClick = { }) {
-                    Icon(painterResource(id = R.drawable.ic_refresh), contentDescription = "Refresh")
+                    Icon(
+                        painterResource(id = R.drawable.ic_refresh),
+                        contentDescription = "Refresh"
+                    )
                 }
             }
         )
@@ -250,7 +270,10 @@ fun DeviceInfoScreen(
                 Text(
                     text = stringResource(id = R.string.vulnerabilities_detected),
                     color = Color.White,
-                    modifier = Modifier.padding(horizontal = medium_space, vertical = extra_small_space),
+                    modifier = Modifier.padding(
+                        horizontal = medium_space,
+                        vertical = extra_small_space
+                    ),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -278,17 +301,35 @@ fun DeviceInfoScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(id = R.string.name_label))
                         Spacer(modifier = Modifier.width(extra_small_space))
-                        Icon(painterResource(id = R.drawable.ic_edit), contentDescription = null, modifier = Modifier.size(icon_size_small))
+                        Icon(
+                            painterResource(id = R.drawable.ic_edit),
+                            contentDescription = null,
+                            modifier = Modifier.size(icon_size_small)
+                        )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(id = R.string.type_label))
                         Spacer(modifier = Modifier.width(extra_small_space))
-                        Icon(painterResource(id = R.drawable.ic_edit), contentDescription = null, modifier = Modifier.size(icon_size_small))
+                        Icon(
+                            painterResource(id = R.drawable.ic_edit),
+                            contentDescription = null,
+                            modifier = Modifier.size(icon_size_small)
+                        )
                     }
                     Spacer(modifier = Modifier.height(extra_small_space))
-                    Box(modifier = Modifier.width(bar_width_large).height(small_space).background(Color.LightGray))
+                    Box(
+                        modifier = Modifier
+                            .width(bar_width_large)
+                            .height(small_space)
+                            .background(Color.LightGray)
+                    )
                     Spacer(modifier = Modifier.height(extra_small_space))
-                    Box(modifier = Modifier.width(bar_width_medium).height(small_space).background(Color.LightGray))
+                    Box(
+                        modifier = Modifier
+                            .width(bar_width_medium)
+                            .height(small_space)
+                            .background(Color.LightGray)
+                    )
                 }
             }
 
@@ -346,7 +387,12 @@ fun VulnerabilityItem(modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
             ) {
                 Column {
                     Text(text = "Nom", color = Color.Gray)
-                    Box(modifier = Modifier.width(bar_width_small).height(small_space).background(Color.LightGray))
+                    Box(
+                        modifier = Modifier
+                            .width(bar_width_small)
+                            .height(small_space)
+                            .background(Color.LightGray)
+                    )
                 }
                 Icon(painterResource(id = R.drawable.ic_chevron_right), contentDescription = null)
             }
@@ -370,10 +416,18 @@ fun ActionButton(modifier: Modifier = Modifier, text: String) {
 fun CVEScreen(modifier: Modifier = Modifier, onBack: () -> Unit = {}) {
     Column(modifier = modifier.fillMaxSize()) {
         CenterAlignedTopAppBar(
-            title = { Text(stringResource(id = R.string.vulnerability_title), fontWeight = FontWeight.Bold) },
+            title = {
+                Text(
+                    stringResource(id = R.string.vulnerability_title),
+                    fontWeight = FontWeight.Bold
+                )
+            },
             navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Icon(painterResource(id = R.drawable.ic_arrow_back), contentDescription = "Back")
+                    Icon(
+                        painterResource(id = R.drawable.ic_arrow_back),
+                        contentDescription = "Back"
+                    )
                 }
             }
         )
@@ -405,7 +459,12 @@ fun CVESection(modifier: Modifier = Modifier, title: String) {
 fun ParametresScreen(modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize()) {
         CenterAlignedTopAppBar(
-            title = { Text(stringResource(id = R.string.parameters_title), fontWeight = FontWeight.Bold) }
+            title = {
+                Text(
+                    stringResource(id = R.string.parameters_title),
+                    fontWeight = FontWeight.Bold
+                )
+            }
         )
 
         LazyColumn(modifier = Modifier.padding(medium_space)) {
@@ -426,8 +485,13 @@ fun ParametreItem(modifier: Modifier = Modifier, index: Int) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(text = "Param$index", fontSize = small_text)
-        Box(modifier = Modifier.width(bar_width_large).height(small_space).background(Color(0xFFE0E0E0)))
-        
+        Box(
+            modifier = Modifier
+                .width(bar_width_large)
+                .height(small_space)
+                .background(Color(0xFFE0E0E0))
+        )
+
         when (index) {
             3 -> {
                 Box(
@@ -438,14 +502,30 @@ fun ParametreItem(modifier: Modifier = Modifier, index: Int) {
                         .background(Color.LightGray),
                     contentAlignment = Alignment.CenterStart
                 ) {
-                    Box(modifier = Modifier.padding(tiny_space).size(medium_space).clip(CircleShape).background(Color.Gray))
+                    Box(
+                        modifier = Modifier
+                            .padding(tiny_space)
+                            .size(medium_space)
+                            .clip(CircleShape)
+                            .background(Color.Gray)
+                    )
                 }
             }
+
             1, 2 -> {
-                Icon(painterResource(id = R.drawable.ic_edit), contentDescription = null, modifier = Modifier.size(icon_size_medium))
+                Icon(
+                    painterResource(id = R.drawable.ic_edit),
+                    contentDescription = null,
+                    modifier = Modifier.size(icon_size_medium)
+                )
             }
+
             else -> {
-                Icon(painterResource(id = R.drawable.ic_chevron_right), contentDescription = null, modifier = Modifier.size(icon_size_medium))
+                Icon(
+                    painterResource(id = R.drawable.ic_chevron_right),
+                    contentDescription = null,
+                    modifier = Modifier.size(icon_size_medium)
+                )
             }
         }
     }
@@ -456,7 +536,12 @@ fun ParametreItem(modifier: Modifier = Modifier, index: Int) {
 fun HistoriqueScreen(modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize()) {
         CenterAlignedTopAppBar(
-            title = { Text(stringResource(id = R.string.history_scans_title), fontWeight = FontWeight.Bold) }
+            title = {
+                Text(
+                    stringResource(id = R.string.history_scans_title),
+                    fontWeight = FontWeight.Bold
+                )
+            }
         )
 
         LazyColumn(modifier = Modifier.padding(medium_space)) {
@@ -478,7 +563,11 @@ fun HistoryItem(modifier: Modifier = Modifier, index: Int) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(text = "Réseau $index", fontSize = medium_small_text)
-            Icon(painterResource(id = R.drawable.ic_chevron_right), contentDescription = null, modifier = Modifier.size(icon_size_medium))
+            Icon(
+                painterResource(id = R.drawable.ic_chevron_right),
+                contentDescription = null,
+                modifier = Modifier.size(icon_size_medium)
+            )
         }
         HorizontalDivider(color = Color.LightGray)
     }
@@ -496,11 +585,11 @@ fun ScanScreen(modifier: Modifier = Modifier, onCancel: () -> Unit = {}) {
     }
     var isScanning by remember { mutableStateOf(!isPreview) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var foundDevices by remember { mutableStateOf<List<NetworkDevice>>(emptyList()) }
+    var network by remember { mutableStateOf<Network?>(null) }
     var permissionsGranted by remember {
         mutableStateOf(hasRequiredPermissions(context, requiredPermissions))
     }
-    val activeScan = remember { mutableStateOf<CompletableFuture<List<NetworkDevice>>?>(null) }
+    val activeScan = remember { mutableStateOf<CompletableFuture<Network?>?>(null) }
 
     // check if permissions have been given
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -508,7 +597,10 @@ fun ScanScreen(modifier: Modifier = Modifier, onCancel: () -> Unit = {}) {
     ) { grantResults ->
         permissionsGranted = requiredPermissions.all { permission ->
             grantResults[permission] == true ||
-                ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        permission
+                    ) == PackageManager.PERMISSION_GRANTED
         }
         if (!permissionsGranted) {
             isScanning = false
@@ -524,9 +616,11 @@ fun ScanScreen(modifier: Modifier = Modifier, onCancel: () -> Unit = {}) {
 
     DisposableEffect(context, isPreview, permissionsGranted) {
         if (isPreview) {
-            foundDevices = listOf(
-                NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01"),
-                NetworkDevice(ipAddress = "192.168.1.20", macAddress = "AA:BB:CC:DD:EE:02")
+            network = Network(
+                "192.168.1.0", "Local network", listOf(
+                    NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01"),
+                    NetworkDevice(ipAddress = "192.168.1.20", macAddress = "AA:BB:CC:DD:EE:02")
+                )
             )
             isScanning = false
             onDispose { }
@@ -550,7 +644,7 @@ fun ScanScreen(modifier: Modifier = Modifier, onCancel: () -> Unit = {}) {
                             if (throwable != null && !future.isCancelled) {
                                 errorMessage = throwable.message ?: "Scan failed"
                             } else if (!future.isCancelled) {
-                                foundDevices = devices ?: emptyList()
+                                network = devices ?: null
                             }
                         }
                     }
@@ -591,19 +685,22 @@ fun ScanScreen(modifier: Modifier = Modifier, onCancel: () -> Unit = {}) {
             Text(
                 text = if (isScanning) stringResource(id = R.string.scan_in_progress) else "Scan complete",
                 color = Color.White,
-                modifier = Modifier.padding(horizontal = large_space, vertical = small_medium_space),
+                modifier = Modifier.padding(
+                    horizontal = large_space,
+                    vertical = small_medium_space
+                ),
                 fontSize = medium_large_text
             )
         }
 
         Spacer(modifier = Modifier.height(giant_space))
 
-        Box(modifier = Modifier.size(mega_space), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.size(bar_width_large), contentAlignment = Alignment.Center) {
             if (isScanning) {
                 CircularProgressIndicator(color = Color.Gray, strokeWidth = tiny_space)
             } else {
                 Text(
-                    text = foundDevices.size.toString(),
+                    text = "${network?.devices?.size} appareils",
                     color = Color.Gray,
                     fontSize = large_text,
                     fontWeight = FontWeight.Bold
@@ -625,24 +722,24 @@ fun ScanScreen(modifier: Modifier = Modifier, onCancel: () -> Unit = {}) {
             colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
         ) {
             Text(
-                text = stringResource(id = R.string.cancel),
+                text = if (isScanning) stringResource(id = R.string.cancel) else stringResource(R.string.details),
                 color = Color.Black,
                 fontSize = medium_text,
                 fontWeight = FontWeight.Bold
             )
         }
-        
+
         Spacer(modifier = Modifier.weight(1f))
-        
+
         Column(modifier = Modifier.fillMaxWidth()) {
             if (errorMessage != null) {
                 ScanStatusItem(text = errorMessage.orEmpty(), backgroundColor = Color(0xFF9C2F2F))
-            } else if (foundDevices.isEmpty() && !isScanning) {
+            } else if (network?.devices?.isEmpty() ?: true && !isScanning) {
                 ScanStatusItem(text = "No devices found")
             } else {
-                foundDevices.forEach { device ->
+                network?.devices?.forEach { device ->
                     val macLabel = device.macAddress ?: "Unknown MAC"
-                    ScanStatusItem(text = "${device.ipAddress} - $macLabel")
+                    ScanStatusItem(text = "${device.ipAddress} - $macLabel (${device.hostname ?: "No hostname"})")
                 }
             }
         }
@@ -656,7 +753,11 @@ private fun hasRequiredPermissions(context: Context, permissions: Array<String>)
 }
 
 @Composable
-fun ScanStatusItem(modifier: Modifier = Modifier, text: String, backgroundColor: Color = Color.Gray) {
+fun ScanStatusItem(
+    modifier: Modifier = Modifier,
+    text: String,
+    backgroundColor: Color = Color.Gray
+) {
     Surface(
         color = backgroundColor,
         modifier = modifier
@@ -719,7 +820,7 @@ fun BottomNavIconPlaceholder(modifier: Modifier = Modifier, shape: String) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = when(shape) {
+            text = when (shape) {
                 "triangle_up" -> "▲"
                 "square_x" -> "⊠"
                 "triangle_down" -> "▼"

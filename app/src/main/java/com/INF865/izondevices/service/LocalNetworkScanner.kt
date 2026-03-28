@@ -3,10 +3,13 @@ package com.INF865.izondevices.service
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.LinkAddress
 import android.os.Binder
 import android.os.IBinder
+import androidx.core.content.ContextCompat
+import com.INF865.izondevices.model.Network
 import com.INF865.izondevices.model.NetworkDevice
 import java.io.Closeable
 import java.io.File
@@ -22,11 +25,11 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
     private val coordinatorExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val probeExecutor: ExecutorService = Executors.newFixedThreadPool(PROBE_THREADS)
 
-    fun scanNetwork(): CompletableFuture<List<NetworkDevice>> {
+    fun scanNetwork(): CompletableFuture<Network?> {
         return CompletableFuture.supplyAsync(
             {
                 // get subnet
-                val subnet = getActiveSubnetInfo() ?: return@supplyAsync emptyList()
+                val subnet = getActiveSubnetInfo() ?: return@supplyAsync null
                 // ip of the phone
                 val ownIpAddress = subnet.address.hostAddress.orEmpty()
 
@@ -86,7 +89,12 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
                     )
                 }
 
-                discoveredByIp.values.toList()
+                discoveredByIp.values.toList().sortedBy { ipAsSortableNumber(it.ipAddress) }
+                Network(
+                    networkAddress = subnet.address.hostAddress.orEmpty(),
+                    networkName = subnet.address.hostName,
+                    devices = discoveredByIp.values.toList()
+                )
             },
             coordinatorExecutor
         )
@@ -104,8 +112,10 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
     private fun getActiveSubnetInfo(): SubnetInfo? {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val activeNetwork = connectivityManager.activeNetwork ?: return fallbackSubnetInfo()
-        val linkProperties = connectivityManager.getLinkProperties(activeNetwork) ?: return fallbackSubnetInfo()
+        val activeNetwork = runCatching { connectivityManager.activeNetwork }.getOrNull()
+            ?: return fallbackSubnetInfo()
+        val linkProperties = runCatching { connectivityManager.getLinkProperties(activeNetwork) }.getOrNull()
+            ?: return fallbackSubnetInfo()
 
         val linkAddress = linkProperties.linkAddresses.firstOrNull { isUsableIpv4LinkAddress(it) }
             ?: return fallbackSubnetInfo()
@@ -163,22 +173,17 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
     }
 
     private fun readArpTable(): Map<String, String> {
-        val arpTable = File(ARP_TABLE_PATH)
-        if (!arpTable.exists() || !arpTable.canRead()) return emptyMap()
-
         return runCatching {
-            arpTable.bufferedReader().use { reader ->
-                reader.lineSequence()
+            execCommand("cat /proc/net/arp")
                     .drop(1)
                     .map { it.trim().split(Regex("\\s+")) }
                     .filter { it.size >= 4 }
                     .mapNotNull { columns ->
                         val ip = columns[0]
                         val mac = columns[3]
-                        if (isValidMac(mac)) ip to mac else null
+                        if (isValidMac(mac)) ip to mac.uppercase() else null
                     }
                     .toMap()
-            }
         }.getOrDefault(emptyMap())
     }
 
@@ -238,7 +243,6 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
         const val DEFAULT_PREFIX_LENGTH = 24
         const val MAX_HOSTS = 512
         const val TERMINATION_TIMEOUT_SECONDS = 1L
-        const val ARP_TABLE_PATH = "/proc/net/arp"
         const val INVALID_MAC = "00:00:00:00:00:00"
     }
 }
@@ -259,7 +263,7 @@ class NetworkScanService : Service() {
         super.onDestroy()
     }
 
-    fun scanNetwork(): CompletableFuture<List<NetworkDevice>> {
+    fun scanNetwork(): CompletableFuture<Network?> {
         return scanner.scanNetwork()
     }
 
