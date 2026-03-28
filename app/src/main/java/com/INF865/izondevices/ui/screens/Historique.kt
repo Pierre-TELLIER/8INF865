@@ -21,6 +21,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.INF865.izondevices.R
+import com.INF865.izondevices.ui.theme.CoralRed40
+import com.INF865.izondevices.ui.theme.CoralRed80Background
 import com.INF865.izondevices.ui.theme.icon_size_medium
 import com.INF865.izondevices.ui.theme.medium_small_text
 import com.INF865.izondevices.ui.theme.medium_space
@@ -62,9 +64,10 @@ fun HistoryItem(modifier: Modifier = Modifier, index: Int) {
             Icon(
                 painterResource(id = R.drawable.ic_chevron_right),
                 contentDescription = null,
-                modifier = Modifier.size(icon_size_medium)
+                modifier = Modifier.size(icon_size_medium),
+                tint = CoralRed40
             )
         }
-        HorizontalDivider(color = Color.LightGray)
+        HorizontalDivider(color = CoralRed80Background)
     }
 }

@@ -37,7 +37,7 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color(0xFFF9F9FB),
+        containerColor = CoralRedAppBackground,
         bottomBar = {
             if (currentRoute == NavScreen.MainMenu.route || 
                 currentRoute?.startsWith("device_info") == true || 
@@ -121,7 +121,7 @@ fun IzonBottomNavigation(
 ) {
     NavigationBar(
         modifier = modifier,
-        containerColor = Color.White,
+        containerColor = GreyBarBackground,
         tonalElevation = elevation_none
     ) {
         NavigationBarItem(
@@ -131,7 +131,7 @@ fun IzonBottomNavigation(
             onClick = { onScreenSelected(NavScreen.MainMenu) },
             icon = { BottomNavIconPlaceholder(shape = "triangle_up") },
             colors = NavigationBarItemDefaults.colors(
-                indicatorColor = Color(0xFFE8EDFF)
+                indicatorColor = CoralRedSelectedBackground
             )
         )
         NavigationBarItem(
@@ -139,7 +139,7 @@ fun IzonBottomNavigation(
             onClick = { onScreenSelected(NavScreen.Parametres) },
             icon = { BottomNavIconPlaceholder(shape = "square_x") },
             colors = NavigationBarItemDefaults.colors(
-                indicatorColor = Color(0xFFE8EDFF)
+                indicatorColor = CoralRedSelectedBackground
             )
         )
         NavigationBarItem(
@@ -147,7 +147,7 @@ fun IzonBottomNavigation(
             onClick = { onScreenSelected(NavScreen.Historique) },
             icon = { BottomNavIconPlaceholder(shape = "triangle_down") },
             colors = NavigationBarItemDefaults.colors(
-                indicatorColor = Color(0xFFE8EDFF)
+                indicatorColor = CoralRedSelectedBackground
             )
         )
     }
@@ -158,7 +158,7 @@ fun BottomNavIconPlaceholder(modifier: Modifier = Modifier, shape: String) {
     Box(
         modifier = modifier
             .size(huge_space)
-            .border(border_thickness, Color.Gray),
+            .border(border_thickness, CoralRed40),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -168,7 +168,7 @@ fun BottomNavIconPlaceholder(modifier: Modifier = Modifier, shape: String) {
                 "triangle_down" -> "▼"
                 else -> ""
             },
-            color = Color.Gray,
+            color = CoralRed80,
             fontSize = big_text
         )
     }
@@ -193,7 +193,10 @@ private fun loadLatestScan(context: Context): List<NetworkDevice> {
 @Composable
 fun MainMenuPreview() {
     IzondevicesTheme {
-        MainMenuScreen(devices = emptyList())
+        MainMenuScreen(devices = listOf(
+            NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01", hostname = "Printer"),
+            NetworkDevice(ipAddress = "192.168.1.20", macAddress = "AA:BB:CC:DD:EE:02", hostname = "Laptop")
+        ))//emptyList())
     }
 }
 

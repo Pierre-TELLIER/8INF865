@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,10 +27,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.INF865.izondevices.R
+import com.INF865.izondevices.ui.theme.CoralRed40
+import com.INF865.izondevices.ui.theme.CoralRed40Background
+import com.INF865.izondevices.ui.theme.CoralRed80
+import com.INF865.izondevices.ui.theme.CoralRed80Background
 import com.INF865.izondevices.ui.theme.bar_width_large
 import com.INF865.izondevices.ui.theme.grid_spacing
 import com.INF865.izondevices.ui.theme.huge_space
 import com.INF865.izondevices.ui.theme.icon_size_medium
+import com.INF865.izondevices.ui.theme.large_space
 import com.INF865.izondevices.ui.theme.medium_space
 import com.INF865.izondevices.ui.theme.small_medium_space
 import com.INF865.izondevices.ui.theme.small_space
@@ -60,56 +66,67 @@ fun ParametresScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun ParametreItem(modifier: Modifier = Modifier, index: Int) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = small_medium_space),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = "Param$index", fontSize = small_text)
-        Box(
-            modifier = Modifier
-                .width(bar_width_large)
-                .height(small_space)
-                .background(Color(0xFFE0E0E0))
-        )
+    Column(modifier = modifier.fillMaxSize()) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = small_medium_space),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = "Param$index", fontSize = small_text)
+            Box(
+                modifier = Modifier
+                    .width(bar_width_large)
+                    .height(small_space)
+                    .background(CoralRed40Background)
+            )
 
-        when (index) {
-            3 -> {
-                Box(
-                    modifier = Modifier
-                        .width(huge_space)
-                        .height(grid_spacing)
-                        .clip(CircleShape)
-                        .background(Color.LightGray),
-                    contentAlignment = Alignment.CenterStart
-                ) {
+            when (index) {
+                3 -> {
                     Box(
                         modifier = Modifier
-                            .padding(tiny_space)
-                            .size(medium_space)
+                            .width(huge_space)
+                            .height(grid_spacing)
                             .clip(CircleShape)
-                            .background(Color.Gray)
-                    )
+                            .background(CoralRed40Background),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .padding(tiny_space)
+                                .size(medium_space)
+                                .clip(CircleShape)
+                                .background(CoralRed80)
+                        )
+                    }
+                }
+
+                1, 2 -> {
+                    Box(modifier = Modifier.width(huge_space), contentAlignment = Alignment.BottomEnd)
+                    {
+                        Icon(
+                            painterResource(id = R.drawable.ic_edit),
+                            contentDescription = null,
+                            modifier = Modifier.size(icon_size_medium),
+                            tint = CoralRed40
+                        )
+                    }
+                }
+
+                else -> {
+                    Box(modifier = Modifier.width(huge_space), contentAlignment = Alignment.BottomEnd)
+                    {
+                        Icon(
+                            painterResource(id = R.drawable.ic_chevron_right),
+                            contentDescription = null,
+                            modifier = Modifier.size(icon_size_medium),
+                            tint = CoralRed40
+                        )
+                    }
                 }
             }
-
-            1, 2 -> {
-                Icon(
-                    painterResource(id = R.drawable.ic_edit),
-                    contentDescription = null,
-                    modifier = Modifier.size(icon_size_medium)
-                )
-            }
-
-            else -> {
-                Icon(
-                    painterResource(id = R.drawable.ic_chevron_right),
-                    contentDescription = null,
-                    modifier = Modifier.size(icon_size_medium)
-                )
-            }
         }
+        HorizontalDivider(color = CoralRed80Background)
     }
 }

@@ -1,5 +1,7 @@
 package com.INF865.izondevices.ui.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -29,10 +30,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.INF865.izondevices.R
 import com.INF865.izondevices.model.NetworkDevice
+import com.INF865.izondevices.ui.theme.CoralRed40
+import com.INF865.izondevices.ui.theme.CoralRed80
+import com.INF865.izondevices.ui.theme.CoralRed80Background
+import com.INF865.izondevices.ui.theme.CoralRedAppBackground
+import com.INF865.izondevices.ui.theme.CoralRedDark
+import com.INF865.izondevices.ui.theme.CoralRedLight
+import com.INF865.izondevices.ui.theme.Purple80
+import com.INF865.izondevices.ui.theme.PurpleGrey80
 import com.INF865.izondevices.ui.theme.border_thickness
 import com.INF865.izondevices.ui.theme.divider_thickness
 import com.INF865.izondevices.ui.theme.extra_large_space
@@ -44,6 +54,7 @@ import com.INF865.izondevices.ui.theme.huge_space
 import com.INF865.izondevices.ui.theme.large_space
 import com.INF865.izondevices.ui.theme.large_text
 import com.INF865.izondevices.ui.theme.medium_large_text
+import com.INF865.izondevices.ui.theme.medium_small_text
 import com.INF865.izondevices.ui.theme.medium_space
 import com.INF865.izondevices.ui.theme.small_space
 import com.INF865.izondevices.ui.theme.small_text
@@ -76,7 +87,7 @@ fun MainMenuScreen(
                 modifier = Modifier
                     .width(giant_space)
                     .height(tiny_space)
-                    .background(Color.Gray)
+                    .background(CoralRed40)
             )
         }
 
@@ -84,7 +95,7 @@ fun MainMenuScreen(
 
         if (devices.isEmpty()) {
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                Text(text = "Aucun scan récent", color = Color.Gray)
+                Text(text = "Aucun scan récent", color = Color.DarkGray)
             }
         } else {
             LazyVerticalGrid(
@@ -106,13 +117,13 @@ fun MainMenuScreen(
             Row(modifier = Modifier.fillMaxWidth()) {
                 HorizontalDivider(
                     modifier = Modifier.weight(1f),
-                    color = Color.Gray,
+                    color = CoralRed40,
                     thickness = divider_thickness
                 )
                 Spacer(modifier = Modifier.width(grid_spacing))
                 HorizontalDivider(
                     modifier = Modifier.weight(1f),
-                    color = Color.Gray,
+                    color = CoralRed40,
                     thickness = divider_thickness
                 )
             }
@@ -125,7 +136,8 @@ fun MainMenuScreen(
                     .height(giga_space)
                     .align(Alignment.CenterHorizontally),
                 shape = RoundedCornerShape(medium_space),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD0D0D0))
+                border = BorderStroke(width = tiny_space, color = CoralRedLight),
+                colors = ButtonDefaults.buttonColors(containerColor = CoralRed80Background)
             ) {
                 Text(
                     text = stringResource(id = R.string.scan),
@@ -148,28 +160,32 @@ fun DeviceItem(
     Box(
         modifier = modifier
             .aspectRatio(1f)
-            .border(border_thickness, Color.Gray)
+            .border(border_thickness, CoralRedDark)
             .clickable(onClick = onClick)
-            .padding(large_space),
+            .padding(medium_space),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
+            /*Box(
                 modifier = Modifier
                     .size(huge_space)
                     .border(border_thickness, Color.Gray)
+            )*/
+            Image(
+                painterResource(id = R.drawable.smartphone),
+                contentDescription = "Smartphone icon",
             )
-            Spacer(modifier = Modifier.height(small_space))
+            Spacer(modifier = Modifier.weight(1.0f))
             Text(
                 text = device.ipAddress,
-                fontSize = small_text,
+                fontSize = medium_small_text,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
             device.hostname?.let {
                 Text(
                     text = it,
-                    fontSize = small_text,
+                    fontSize = medium_small_text,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
                 )
