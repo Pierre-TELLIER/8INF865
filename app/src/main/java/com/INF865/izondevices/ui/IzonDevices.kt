@@ -226,6 +226,22 @@ fun HistoriquePreview() {
 
 @Preview(showBackground = true)
 @Composable
+fun DeviceInfoPreview() {
+    IzondevicesTheme {
+        DeviceInfoScreen(NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01", hostname = "Printer"))
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ScanPreview() {
+    IzondevicesTheme {
+        ScanScreen()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
 fun AppPreview() {
     IzondevicesTheme {
         IzonDevicesApp()

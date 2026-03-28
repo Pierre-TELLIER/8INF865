@@ -46,6 +46,8 @@ import com.INF865.izondevices.R
 import com.INF865.izondevices.model.Network
 import com.INF865.izondevices.model.NetworkDevice
 import com.INF865.izondevices.service.NetworkScanService
+import com.INF865.izondevices.ui.theme.CoralRed40
+import com.INF865.izondevices.ui.theme.CoralRed80Background
 import com.INF865.izondevices.ui.theme.border_thickness
 import com.INF865.izondevices.ui.theme.button_height
 import com.INF865.izondevices.ui.theme.extra_small_space
@@ -59,6 +61,9 @@ import com.INF865.izondevices.ui.theme.medium_text
 import com.INF865.izondevices.ui.theme.mega_space
 import com.INF865.izondevices.ui.theme.small_medium_space
 import com.INF865.izondevices.ui.theme.tiny_space
+import com.INF865.izondevices.ui.theme.CoralRedDark
+import com.INF865.izondevices.ui.theme.CoralRedSelectedBackground
+import com.INF865.izondevices.ui.theme.GreenVulnerabilities
 import java.util.concurrent.CompletableFuture
 
 @Composable
@@ -171,7 +176,7 @@ fun ScanScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Surface(
-            color = Color.DarkGray,
+            color = if (isScanning) CoralRedDark else GreenVulnerabilities,
             shape = RoundedCornerShape(extra_small_space)
         ) {
             Text(
@@ -189,11 +194,11 @@ fun ScanScreen(
 
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             if (isScanning) {
-                CircularProgressIndicator(color = Color.Gray, strokeWidth = tiny_space)
+                CircularProgressIndicator(color = CoralRed40, strokeWidth = tiny_space)
             } else {
                 Text(
                     text = "${network?.devices?.size ?: 0} appareils",
-                    color = Color.Gray,
+                    color = Color.DarkGray,
                     fontSize = large_text,
                     fontWeight = FontWeight.Bold
                 )
@@ -215,7 +220,7 @@ fun ScanScreen(
                 .fillMaxWidth(0.5f)
                 .height(button_height),
             shape = RoundedCornerShape(small_medium_space),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
+            colors = ButtonDefaults.buttonColors(containerColor = CoralRed80Background)
         ) {
             Text(
                 text = if (isScanning) stringResource(id = R.string.cancel) else stringResource(R.string.details),
@@ -229,7 +234,7 @@ fun ScanScreen(
 
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).fillMaxWidth()) {
             if (errorMessage != null) {
-                ScanStatusItem(text = errorMessage.orEmpty(), backgroundColor = Color(0xFF9C2F2F))
+                ScanStatusItem(text = errorMessage.orEmpty(), backgroundColor = CoralRedSelectedBackground)
             } else if (network?.devices?.isEmpty() ?: true && !isScanning) {
                 ScanStatusItem(text = "No devices found")
             } else {
@@ -252,17 +257,18 @@ fun hasRequiredPermissions(context: Context, permissions: Array<String>): Boolea
 fun ScanStatusItem(
     modifier: Modifier = Modifier,
     text: String,
-    backgroundColor: Color = Color.Gray
+    backgroundColor: Color = CoralRedSelectedBackground
 ) {
     Surface(
         color = backgroundColor,
+        shape = RoundedCornerShape(extra_small_space),
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = border_thickness)
     ) {
         Text(
             text = text,
-            color = Color.White,
+            color = Color.DarkGray,
             modifier = Modifier.padding(horizontal = medium_space, vertical = extra_small_space),
             fontSize = medium_small_text
         )

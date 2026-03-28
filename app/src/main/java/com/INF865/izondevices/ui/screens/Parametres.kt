@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -35,7 +34,6 @@ import com.INF865.izondevices.ui.theme.bar_width_large
 import com.INF865.izondevices.ui.theme.grid_spacing
 import com.INF865.izondevices.ui.theme.huge_space
 import com.INF865.izondevices.ui.theme.icon_size_medium
-import com.INF865.izondevices.ui.theme.large_space
 import com.INF865.izondevices.ui.theme.medium_space
 import com.INF865.izondevices.ui.theme.small_medium_space
 import com.INF865.izondevices.ui.theme.small_space

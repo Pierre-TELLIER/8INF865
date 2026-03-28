@@ -36,13 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import com.INF865.izondevices.R
 import com.INF865.izondevices.model.NetworkDevice
 import com.INF865.izondevices.ui.theme.CoralRed40
-import com.INF865.izondevices.ui.theme.CoralRed80
 import com.INF865.izondevices.ui.theme.CoralRed80Background
-import com.INF865.izondevices.ui.theme.CoralRedAppBackground
 import com.INF865.izondevices.ui.theme.CoralRedDark
 import com.INF865.izondevices.ui.theme.CoralRedLight
-import com.INF865.izondevices.ui.theme.Purple80
-import com.INF865.izondevices.ui.theme.PurpleGrey80
 import com.INF865.izondevices.ui.theme.border_thickness
 import com.INF865.izondevices.ui.theme.divider_thickness
 import com.INF865.izondevices.ui.theme.extra_large_space
@@ -56,8 +52,6 @@ import com.INF865.izondevices.ui.theme.large_text
 import com.INF865.izondevices.ui.theme.medium_large_text
 import com.INF865.izondevices.ui.theme.medium_small_text
 import com.INF865.izondevices.ui.theme.medium_space
-import com.INF865.izondevices.ui.theme.small_space
-import com.INF865.izondevices.ui.theme.small_text
 import com.INF865.izondevices.ui.theme.tiny_space
 
 @Composable

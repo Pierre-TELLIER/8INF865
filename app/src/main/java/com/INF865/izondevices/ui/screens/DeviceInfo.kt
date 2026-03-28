@@ -7,6 +7,7 @@ import android.content.ServiceConnection
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -49,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import com.INF865.izondevices.R
 import com.INF865.izondevices.model.NetworkDevice
 import com.INF865.izondevices.scanner.FIRST_PORT
@@ -117,7 +120,8 @@ fun DeviceInfoScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         painterResource(id = R.drawable.ic_arrow_back),
-                        contentDescription = "Back"
+                        contentDescription = "Back",
+                        tint = CoralRed40
                     )
                 }
             },
@@ -125,7 +129,8 @@ fun DeviceInfoScreen(
                 IconButton(onClick = { }) {
                     Icon(
                         painterResource(id = R.drawable.ic_refresh),
-                        contentDescription = "Refresh"
+                        contentDescription = "Refresh",
+                        tint = CoralRed40
                     )
                 }
             }
@@ -139,12 +144,13 @@ fun DeviceInfoScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Surface(
-                color = Color.DarkGray,
+                color = RedVulnerabilities, // TODO : adapt color with number of vulnerabilities found
                 shape = RoundedCornerShape(extra_small_space),
-                modifier = Modifier.padding(vertical = small_space)
+                modifier = Modifier.padding(vertical = small_space).width(bar_width_giant).height(extra_large_space)
             ) {
                 Text(
                     text = stringResource(id = R.string.vulnerabilities_detected),
+                    textAlign = TextAlign.Center,
                     color = Color.White,
                     modifier = Modifier.padding(
                         horizontal = medium_space,
@@ -157,7 +163,7 @@ fun DeviceInfoScreen(
             Text(
                 text = device.ipAddress,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+                color = Color.DarkGray
             )
 
             Spacer(modifier = Modifier.height(medium_space))
@@ -170,14 +176,14 @@ fun DeviceInfoScreen(
                     modifier = Modifier
                         .size(mega_space)
                         .clip(CircleShape)
-                        .background(Color.LightGray),
+                        .background(CoralRed80Background),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_home), // Placeholder icon
                         contentDescription = null,
                         modifier = Modifier.size(extra_large_space),
-                        tint = Color.White
+                        tint = CoralRed40
                     )
                 }
                 Spacer(modifier = Modifier.width(medium_space))
@@ -188,21 +194,20 @@ fun DeviceInfoScreen(
                         Icon(
                             painterResource(id = R.drawable.ic_edit),
                             contentDescription = null,
-                            modifier = Modifier.size(icon_size_small)
+                            modifier = Modifier.size(icon_size_small),
+                            tint = CoralRed40
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = "MAC: ${device.macAddress ?: INVALID_MAC}",
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
                     Spacer(modifier = Modifier.height(extra_small_space))
-                    Box(
-                        modifier = Modifier
-                            .width(bar_width_large)
-                            .height(small_space)
-                            .background(Color.LightGray)
+                    Text(
+                        text = "More info on device",
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -212,7 +217,8 @@ fun DeviceInfoScreen(
             Text(
                 text = stringResource(id = R.string.vulnerabilities_label),
                 modifier = Modifier.align(Alignment.Start),
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.DarkGray,
             )
 
             Spacer(modifier = Modifier.height(small_space))
@@ -226,7 +232,7 @@ fun DeviceInfoScreen(
             Text(
                 text = stringResource(id = R.string.actions_label),
                 modifier = Modifier.align(Alignment.Start),
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.titleMedium
             )
 
             Spacer(modifier = Modifier.height(medium_space))
@@ -240,10 +246,10 @@ fun DeviceInfoScreen(
                     onClick = {
                         coroutineScope.launch {
                             val result = pingDevice(device)
-                            pingButtonColor.value = if (result) Color.Green else Color.Red
+                            pingButtonColor.value = if (result) GreenVulnerabilities else RedVulnerabilities
                         }
                     },
-                    backgroundColor = pingButtonColor.value ?: Color.White
+                    backgroundColor = pingButtonColor.value ?: CoralRed80Background
                 )
                 ActionButton(
                     text = stringResource(id = R.string.port_scan_label),
@@ -279,7 +285,7 @@ fun DeviceInfoScreen(
             Spacer(modifier = Modifier.height(small_space))
 
             if (isPortScanning.value) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = CoralRed40)
                 Spacer(modifier = Modifier.height(extra_small_space))
                 Text(
                     text = "Ports scannés: ${scannedPortsCount.value}",
@@ -313,7 +319,7 @@ fun VulnerabilityItem(modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Column {
-            HorizontalDivider(color = Color.LightGray)
+            HorizontalDivider(color = CoralRed80Background)
             Row(
                 modifier = Modifier
                     .padding(vertical = small_medium_space)
@@ -322,15 +328,14 @@ fun VulnerabilityItem(modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text(text = "Nom", color = Color.Gray)
-                    Box(
-                        modifier = Modifier
-                            .width(bar_width_small)
-                            .height(small_space)
-                            .background(Color.LightGray)
+                    Text(text = "Nom", color = Color.DarkGray)
+                    Text(
+                        text = "More info on vulnerability",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
                     )
                 }
-                Icon(painterResource(id = R.drawable.ic_chevron_right), contentDescription = null)
+                Icon(painterResource(id = R.drawable.ic_chevron_right), contentDescription = null, tint = CoralRed40)
             }
         }
     }
@@ -341,14 +346,15 @@ fun ActionButton(
     modifier: Modifier = Modifier,
     text: String,
     onClick: () -> Unit = { },
-    backgroundColor: Color = Color.White
+    backgroundColor: Color = CoralRed80Background
 ) {
     OutlinedButton(
         onClick = onClick,
         shape = RoundedCornerShape(small_medium_space),
+        colors = ButtonDefaults.buttonColors(containerColor = backgroundColor),
+        border = BorderStroke(width = border_thickness, color = CoralRedLight),
         modifier = modifier
             .height(huge_space)
-            .background(backgroundColor, shape = RoundedCornerShape(small_medium_space))
     ) {
         Text(text = text, color = Color.Black)
     }
