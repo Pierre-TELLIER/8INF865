@@ -35,25 +35,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.INF865.izondevices.R
 import com.INF865.izondevices.ui.theme.CoralRed40
-import com.INF865.izondevices.ui.theme.CoralRed40Background
 import com.INF865.izondevices.ui.theme.CoralRed80
 import com.INF865.izondevices.ui.theme.CoralRed80Background
-import com.INF865.izondevices.ui.theme.CoralRedSelectedBackground
 import com.INF865.izondevices.ui.theme.CoralRedSwitchOnBackground
-import com.INF865.izondevices.ui.theme.bar_width_large
 import com.INF865.izondevices.ui.theme.extra_large_space
 import com.INF865.izondevices.ui.theme.extra_small_space
 import com.INF865.izondevices.ui.theme.extra_small_text
 import com.INF865.izondevices.ui.theme.huge_space
 import com.INF865.izondevices.ui.theme.icon_size_medium
-import com.INF865.izondevices.ui.theme.icon_size_small
 import com.INF865.izondevices.ui.theme.large_space
 import com.INF865.izondevices.ui.theme.medium_large_text
 import com.INF865.izondevices.ui.theme.medium_small_text
 import com.INF865.izondevices.ui.theme.medium_space
 import com.INF865.izondevices.ui.theme.small_medium_space
-import com.INF865.izondevices.ui.theme.small_space
-import com.INF865.izondevices.ui.theme.small_text
 import com.INF865.izondevices.ui.theme.tiny_space
 
 
@@ -171,7 +165,7 @@ fun ParametreItem(modifier: Modifier = Modifier, name: String, type: String = "b
                     Box(modifier = Modifier.width(huge_space), contentAlignment = Alignment.BottomEnd)
                     {
                         Icon(
-                            painterResource(id = R.drawable.question_mark),
+                            painterResource(id = R.drawable.ic_question_mark),
                             contentDescription = null,
                             modifier = Modifier.size(icon_size_medium),
                             tint = CoralRed40
