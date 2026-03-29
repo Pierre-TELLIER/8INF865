@@ -9,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
@@ -24,6 +23,9 @@ import com.INF865.izondevices.ui.screens.ParametresScreen
 import com.INF865.izondevices.ui.screens.HistoriqueScreen
 import com.INF865.izondevices.ui.screens.ScanScreen
 import com.INF865.izondevices.ui.theme.*
+import androidx.core.content.edit
+import com.INF865.izondevices.model.Network
+import kotlinx.serialization.json.Json
 
 @Composable
 fun IzonDevicesApp(modifier: Modifier = Modifier) {
@@ -70,7 +72,7 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
         ) {
             composable(NavScreen.MainMenu.route) {
                 MainMenuScreen(
-                    devices = latestScanResult,
+                    network = latestScanResult,
                     onDeviceClick = { device -> 
                         navController.navigate(NavScreen.DeviceInfo.createRoute(device.ipAddress)) 
                     },
@@ -79,7 +81,7 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
             }
             composable(NavScreen.DeviceInfo.route) { backStackEntry ->
                 val ip = backStackEntry.arguments?.getString("ip")
-                val device = latestScanResult.find { it.ipAddress == ip }
+                val device = latestScanResult.devices.find { it.ipAddress == ip }
                 if (device != null) {
                     DeviceInfoScreen(
                         device = device,
@@ -103,8 +105,8 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
                 ScanScreen(
                     onCancel = { navController.popBackStack() },
                     onScanFinished = { network ->
-                        latestScanResult = network.devices
-                        saveLatestScan(context, network.devices)
+                        latestScanResult = network
+                        saveLatestScan(context, network)
                         navController.popBackStack()
                     }
                 )
@@ -174,29 +176,37 @@ fun BottomNavIconPlaceholder(modifier: Modifier = Modifier, shape: String) {
     }
 }
 
-private fun saveLatestScan(context: Context, devices: List<NetworkDevice>) {
+// awful way to save the latest scan result...
+// but cheap and easy
+private fun saveLatestScan(context: Context, network: Network) {
     val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
-    val data = devices.joinToString(";") { "${it.ipAddress},${it.macAddress ?: ""},${it.hostname ?: ""}" }
-    prefs.edit().putString("latest_scan", data).apply()
+    val data = Json.encodeToString(network)
+    prefs.edit { putString("latest_scan", data) }
 }
 
-private fun loadLatestScan(context: Context): List<NetworkDevice> {
+private fun loadLatestScan(context: Context): Network {
     val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
-    val data = prefs.getString("latest_scan", null) ?: return emptyList()
-    return data.split(";").filter { it.isNotEmpty() }.map {
-        val parts = it.split(",")
-        NetworkDevice(parts[0], parts.getOrNull(1)?.takeIf { it.isNotEmpty() }, parts.getOrNull(2)?.takeIf { it.isNotEmpty() })
-    }
+    val invalid_network = Network("", null, emptyList())
+    val data = prefs.getString("latest_scan", null) ?: return invalid_network
+    return runCatching {
+        Json.decodeFromString<Network>(data)
+    }.getOrDefault(invalid_network)
 }
 
 @Preview(showBackground = true)
 @Composable
 fun MainMenuPreview() {
     IzondevicesTheme {
-        MainMenuScreen(devices = listOf(
-            NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01", hostname = "Printer"),
-            NetworkDevice(ipAddress = "192.168.1.20", macAddress = "AA:BB:CC:DD:EE:02", hostname = "Laptop")
-        ))//emptyList())
+        MainMenuScreen(
+            Network(
+                networkAddress = "192.168.1.0",
+                networkName = "My SSID",
+                devices = listOf(
+                    NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01", hostName = "Printer"),
+                    NetworkDevice(ipAddress = "192.168.1.20", macAddress = "AA:BB:CC:DD:EE:02", hostName = "Laptop")
+                )
+            )
+        )
     }
 }
 
@@ -228,7 +238,7 @@ fun HistoriquePreview() {
 @Composable
 fun DeviceInfoPreview() {
     IzondevicesTheme {
-        DeviceInfoScreen(NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01", hostname = "Printer"))
+        DeviceInfoScreen(NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01", hostName = "Printer"))
     }
 }
 

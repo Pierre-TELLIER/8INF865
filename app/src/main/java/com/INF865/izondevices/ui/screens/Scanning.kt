@@ -77,7 +77,10 @@ fun ScanScreen(
     val requiredPermissions = remember {
         arrayOf(
             Manifest.permission.INTERNET,
-            Manifest.permission.ACCESS_NETWORK_STATE
+            Manifest.permission.ACCESS_NETWORK_STATE,
+            Manifest.permission.ACCESS_WIFI_STATE,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION,
         )
     }
     var isScanning by remember { mutableStateOf(!isPreview) }
@@ -115,8 +118,8 @@ fun ScanScreen(
         if (isPreview) {
             network = Network(
                 "192.168.1.0", "Local network", listOf(
-                    NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01", hostname = "Printer"),
-                    NetworkDevice(ipAddress = "192.168.1.20", macAddress = "AA:BB:CC:DD:EE:02", hostname = "Laptop")
+                    NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01", hostName = "Printer"),
+                    NetworkDevice(ipAddress = "192.168.1.20", macAddress = "AA:BB:CC:DD:EE:02", hostName = "Laptop")
                 )
             )
             isScanning = false
@@ -240,7 +243,7 @@ fun ScanScreen(
             } else {
                 network?.devices?.forEach { device ->
                     val macLabel = device.macAddress ?: "Unknown MAC"
-                    ScanStatusItem(text = "${device.ipAddress} - $macLabel (${device.hostname ?: "No hostname"})")
+                    ScanStatusItem(text = "${device.ipAddress} - $macLabel (${device.hostName ?: "No hostname"})")
                 }
             }
         }

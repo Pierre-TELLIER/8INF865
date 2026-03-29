@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.INF865.izondevices.R
+import com.INF865.izondevices.model.Network
 import com.INF865.izondevices.model.NetworkDevice
 import com.INF865.izondevices.ui.theme.CoralRed40
 import com.INF865.izondevices.ui.theme.CoralRed80Background
@@ -59,7 +60,7 @@ import com.INF865.izondevices.ui.theme.tiny_space
 
 @Composable
 fun MainMenuScreen(
-    devices: List<NetworkDevice>,
+    network: Network,
     modifier: Modifier = Modifier,
     onDeviceClick: (NetworkDevice) -> Unit = {},
     onScanClick: () -> Unit = {}
@@ -72,7 +73,7 @@ fun MainMenuScreen(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = stringResource(id = R.string.reseau_label), // TODO : récupérer le nom du réseau scanné
+                text = " " + stringResource(id = R.string.reseau_label) + " " + (network.networkName?: ""), // TODO : récupérer le nom du réseau scanné
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = medium_large_text
@@ -92,7 +93,7 @@ fun MainMenuScreen(
 
         Spacer(modifier = Modifier.height(huge_space))
 
-        if (devices.isEmpty()) {
+        if (network.devices.isEmpty()) {
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Text(text = "Aucun scan récent", color = Color.DarkGray)
             }
@@ -104,7 +105,7 @@ fun MainMenuScreen(
                 verticalArrangement = Arrangement.spacedBy(grid_spacing),
                 contentPadding = PaddingValues(bottom = medium_space)
             ) {
-                items(devices) { device ->
+                items(network.devices) { device ->
                     DeviceItem(device = device, onClick = { onDeviceClick(device) })
                 }
             }
@@ -181,7 +182,7 @@ fun DeviceItem(
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
-            device.hostname?.let {
+            device.hostName?.let {
                 Text(
                     text = it,
                     fontSize = medium_small_text,

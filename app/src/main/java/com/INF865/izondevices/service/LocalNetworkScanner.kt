@@ -5,19 +5,27 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.LinkAddress
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import android.net.wifi.WifiInfo
+import android.net.wifi.WifiManager
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import com.INF865.izondevices.model.Network
 import com.INF865.izondevices.model.NetworkDevice
 import com.INF865.izondevices.scanner.*
 import java.io.Closeable
+import java.net.HttpURLConnection
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.NetworkInterface
+import java.net.URL
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 class LocalNetworkScanner(private val context: Context) : Closeable {
     private val coordinatorExecutor: ExecutorService = Executors.newSingleThreadExecutor()
@@ -60,8 +68,7 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
                     }
                 }
 
-                val arpByIp = readArpTable()
-                val reachableIps = mutableMapOf<String, Pair<String?, String?>>()
+                val reachableDevices = mutableListOf<NetworkDevice>()
 
                 // execute tasks defined earlier
                 probeTasks.forEach { task ->
@@ -75,42 +82,64 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
                         val (reachable, hostName) = data
                         // add host to a Map
                         if (reachable) {
-                            val macAddress = arpByIp[ipAddress]
-                            reachableIps[ipAddress] = Pair(macAddress, hostName)
+                            reachableDevices += NetworkDevice(ipAddress, hostName = hostName)
                         }
                     }
                 }
 
+                // after every request, read ARP table
+                val arpByIp = readArpTable()
 
-                val discoveredByIp = linkedMapOf<String, NetworkDevice>()
-                // Map own device as a NetworkDevice
-                discoveredByIp[ownIpAddress] = NetworkDevice(
-                    ipAddress = ownIpAddress,
-                    macAddress = resolveOwnMacAddress(subnet.address), // Not working ?!
-                    hostname = getHostnameFromNetwork()
-                )
+                // for every reachable IP, get MAC @ from ARP table
+                for (device in reachableDevices) {
+                    val mac = arpByIp[device.ipAddress]
+                    device.macAddress = mac
+                }
 
-                // sort by ip address
-                val remoteIps = reachableIps.keys
-                    .asSequence()
-                    .filter { it != ownIpAddress }
-                    .sortedBy { ipAsSortableNumber(it) }
-                    .toList()
+                val macInfoTasks = reachableDevices.map { device ->
+                    probeExecutor.submit<Unit> {
+                        try {
+                            if ((device.macAddress ?: INVALID_MAC) == INVALID_MAC) {
+                                return@submit
+                            }
+                            val url = URL(
+                                "https://api.maclookup.app/v2/macs/" + device.macAddress?.replace(
+                                    ":",
+                                    ""
+                                )
+                            )
+                            with(url.openConnection() as HttpURLConnection) {
+                                requestMethod = "GET"
+                                if (responseCode != HttpURLConnection.HTTP_OK) {
+                                    println("?NOK !!! $responseCode")
+                                    return@submit
+                                }
+                                val response = inputStream.bufferedReader().readText()
+                                print(response)
+                            }
+                        } catch (e: TimeoutException) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
 
-                // map collected information to a class
-                remoteIps.forEach { ip ->
-                    discoveredByIp[ip] = NetworkDevice(
-                        ipAddress = ip,
-                        macAddress = reachableIps[ip]?.first ?: INVALID_MAC,
-                        hostname = reachableIps[ip]?.second ?: "Unknown --"
+                macInfoTasks.forEach {
+                    it.get(
+                        PROBE_TIMEOUT_MS.toLong() * 4,
+                        TimeUnit.MILLISECONDS
                     )
                 }
 
-                discoveredByIp.values.toList().sortedBy { ipAsSortableNumber(it.ipAddress) }
+                reachableDevices += NetworkDevice(
+                    ipAddress = ownIpAddress,
+                    macAddress = resolveOwnMacAddress(subnet.address), // Not working ?!
+                    hostName = getHostnameFromNetwork()
+                )
+
                 Network(
                     networkAddress = subnet.address.hostAddress.orEmpty(),
-                    networkName = subnet.address.hostName,
-                    devices = discoveredByIp.values.toList()
+                    networkName = this.getWifiSSID(),
+                    devices = reachableDevices.sortedBy { ipAsSortableNumber(it.ipAddress) }
                 )
             },
             coordinatorExecutor
@@ -126,14 +155,49 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
         }
     }
 
+    private fun getWifiSSID(): String? {
+        val connectivityManager =
+            context.getSystemService(ConnectivityManager::class.java)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val request = NetworkRequest.Builder()
+                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                .build()
+
+            val futureSSID = CompletableFuture<String>()
+            val networkCallback = object : ConnectivityManager.NetworkCallback(FLAG_INCLUDE_LOCATION_INFO) {
+                fun onCapabilitiesChanged(
+                    unused: Network,
+                    networkCapabilities: NetworkCapabilities
+                ) {
+                    val wifiInfo = networkCapabilities.transportInfo as WifiInfo
+                    futureSSID.complete(wifiInfo.ssid.replace("\"", ""))
+                    connectivityManager.unregisterNetworkCallback(this)
+                }
+            };
+            connectivityManager.requestNetwork(request, networkCallback);
+            connectivityManager.registerNetworkCallback(request, networkCallback);
+
+            return futureSSID.get()
+        } else {
+            val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
+            return wifiManager.connectionInfo?.ssid
+        }
+    }
+
     private fun getActiveSubnetInfo(): SubnetInfo? {
+        // get connectivity service (wifi, etc)
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        // get the active network
         val activeNetwork = runCatching { connectivityManager.activeNetwork }.getOrNull()
             ?: return fallbackSubnetInfo()
-        val linkProperties = runCatching { connectivityManager.getLinkProperties(activeNetwork) }.getOrNull()
-            ?: return fallbackSubnetInfo()
+        // get properties of the active network
+        val linkProperties =
+            runCatching { connectivityManager.getLinkProperties(activeNetwork) }.getOrNull()
+                ?: return fallbackSubnetInfo()
 
+        // get the link, information of the phone's interface
         val linkAddress = linkProperties.linkAddresses.firstOrNull { isUsableIpv4LinkAddress(it) }
             ?: return fallbackSubnetInfo()
 
@@ -146,8 +210,7 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
     private fun fallbackSubnetInfo(): SubnetInfo? {
         return NetworkInterface.getNetworkInterfaces()
             ?.toList()
-            ?.asSequence()
-            ?.flatMap { it.inetAddresses.toList().asSequence() }
+            ?.flatMap { it.inetAddresses.toList() }
             ?.firstOrNull { it is Inet4Address && !it.isLoopbackAddress }
             ?.let {
                 SubnetInfo(
@@ -193,15 +256,13 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
     }
 
     fun getHostnameFromNetwork(): String? {
-        return try {
+        return runCatching {
             NetworkInterface.getNetworkInterfaces()
-                .asSequence()
-                .flatMap { it.inetAddresses.asSequence() }
+                .toList()
+                .flatMap { it.inetAddresses.toList() }
                 .firstOrNull { !it.isLoopbackAddress && it is java.net.Inet4Address }
                 ?.hostName
-        } catch (e: Exception) {
-            null
-        }
+        }.getOrNull()
     }
 
     /**
@@ -213,21 +274,21 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
         return runCatching {
             // if rooted this can work
             execCommand("cat /proc/net/arp")
-                    // drop first line
-                    .drop(1)
-                    // split column separated by at least one space
-                    .map { it.trim().split(Regex("\\s+")) }
-                    // get only lines that have more than 4 chars
-                    .filter { it.size >= 4 }
-                    // get value from first and fourth column
-                    // IP address and MAC address
-                    // check if MAC address is valid or not
-                    .mapNotNull { columns ->
-                        val ip = columns[0]
-                        val mac = columns[3]
-                        if (isValidMac(mac)) ip to mac.uppercase() else null
-                    }
-                    .toMap()
+                // drop first line
+                .drop(1)
+                // split column separated by at least one space
+                .map { it.trim().split(Regex("\\s+")) }
+                // get only lines that have more than 4 chars
+                .filter { it.size >= 4 }
+                // get value from first and fourth column
+                // IP address and MAC address
+                // check if MAC address is valid or not
+                .mapNotNull { columns ->
+                    val ip = columns[0]
+                    val mac = columns[3]
+                    if (isValidMac(mac)) ip to mac.uppercase() else null
+                }
+                .toMap()
         }.getOrDefault(emptyMap())
     }
 
@@ -238,15 +299,15 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
 
     private fun isValidMac(macAddress: String): Boolean {
         return macAddress.matches(Regex("^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$")) &&
-            macAddress != INVALID_MAC
+                macAddress != INVALID_MAC
     }
 
     private fun inetAddressToInt(address: Inet4Address): Int {
         val bytes = address.address
         return ((bytes[0].toInt() and 0xFF) shl 24) or
-            ((bytes[1].toInt() and 0xFF) shl 16) or
-            ((bytes[2].toInt() and 0xFF) shl 8) or
-            (bytes[3].toInt() and 0xFF)
+                ((bytes[1].toInt() and 0xFF) shl 16) or
+                ((bytes[2].toInt() and 0xFF) shl 8) or
+                (bytes[3].toInt() and 0xFF)
     }
 
     private fun intToIpv4(value: Int): String {

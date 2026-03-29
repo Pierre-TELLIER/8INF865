@@ -124,7 +124,7 @@ fun DeviceInfoScreen(
                 tint = CoralRed40,
             )
             Text(
-                text = device.hostname ?: device.ipAddress,
+                text = device.hostName ?: device.ipAddress,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = medium_large_text
@@ -206,7 +206,7 @@ fun DeviceInfoScreen(
                 Spacer(modifier = Modifier.width(medium_space))
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = device.hostname ?: "Inconnu", fontWeight = FontWeight.Bold)
+                        Text(text = device.hostName ?: "Inconnu", fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(extra_small_space))
                         Icon(
                             painterResource(id = R.drawable.ic_edit),
