@@ -9,7 +9,7 @@ import android.os.IBinder
 import android.os.Looper
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,12 +28,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -63,7 +61,6 @@ import com.INF865.izondevices.service.PortScanService
 import com.INF865.izondevices.ui.theme.*
 import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -108,34 +105,51 @@ fun DeviceInfoScreen(
         }
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        CenterAlignedTopAppBar(
-            title = {
-                Text(
-                    device.hostname ?: device.ipAddress,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        painterResource(id = R.drawable.ic_arrow_back),
-                        contentDescription = "Back",
-                        tint = CoralRed40
-                    )
-                }
-            },
-            actions = {
-                IconButton(onClick = { }) {
-                    Icon(
-                        painterResource(id = R.drawable.ic_refresh),
-                        contentDescription = "Refresh",
-                        tint = CoralRed40
-                    )
-                }
-            }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = large_space, vertical = large_space),
+        horizontalAlignment = Alignment.CenterHorizontally,) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            Icon(
+                painterResource(id = R.drawable.ic_arrow_back),
+                contentDescription = "Back",
+                modifier = Modifier
+                    .clickable(onClick = onBack)
+                    .align(Alignment.CenterStart),
+                tint = CoralRed40,
+            )
+            Text(
+                text = device.hostname ?: device.ipAddress,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = medium_large_text
+                ),
+                textAlign = TextAlign.Center,
+                color = Color.Black
+            )
+            Icon(
+                painterResource(id = R.drawable.ic_refresh),
+                contentDescription = "Refresh",
+                modifier = Modifier
+                    .clickable(onClick = { })
+                    .align(Alignment.CenterEnd),
+                tint = CoralRed40
+            )
+        }
+        Spacer(modifier = Modifier.height(extra_small_space))
+        Box(
+            modifier = Modifier
+                .width(extra_large_space)
+                .height(tiny_space)
+                .align(Alignment.CenterHorizontally)
+                .background(CoralRed40),
         )
-
+        Spacer(modifier = Modifier.height(extra_small_space))
         Column(
             modifier = Modifier
                 .padding(horizontal = medium_space)
@@ -146,7 +160,10 @@ fun DeviceInfoScreen(
             Surface(
                 color = RedVulnerabilities, // TODO : adapt color with number of vulnerabilities found
                 shape = RoundedCornerShape(extra_small_space),
-                modifier = Modifier.padding(vertical = small_space).width(bar_width_giant).height(extra_large_space)
+                modifier = Modifier
+                    .padding(vertical = small_space)
+                    .width(bar_width_giant)
+                    .height(extra_large_space)
             ) {
                 Text(
                     text = stringResource(id = R.string.vulnerabilities_detected),

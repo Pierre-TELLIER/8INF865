@@ -23,4 +23,4 @@ val CoralRedAppBackground = Color(0x12FA2F65)
 val GreyBarBackground = Color(0x122B2B2B)
 
 val RedVulnerabilities = Color(0xFFCC0202)
-val GreenVulnerabilities = Color(0XFF02CC56)
+val GreenVulnerabilities = Color(0XFF02C772)

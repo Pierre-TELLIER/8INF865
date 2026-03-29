@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import com.INF865.izondevices.R
 import com.INF865.izondevices.model.NetworkDevice
 import com.INF865.izondevices.ui.theme.CoralRed40
@@ -43,7 +44,6 @@ import com.INF865.izondevices.ui.theme.border_thickness
 import com.INF865.izondevices.ui.theme.divider_thickness
 import com.INF865.izondevices.ui.theme.extra_large_space
 import com.INF865.izondevices.ui.theme.extra_small_space
-import com.INF865.izondevices.ui.theme.giant_space
 import com.INF865.izondevices.ui.theme.giga_space
 import com.INF865.izondevices.ui.theme.grid_spacing
 import com.INF865.izondevices.ui.theme.huge_space
@@ -67,20 +67,22 @@ fun MainMenuScreen(
             .padding(horizontal = large_space, vertical = large_space),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(modifier = Modifier.align(Alignment.Start)) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = stringResource(id = R.string.reseau_label),
+                text = stringResource(id = R.string.reseau_label), // TODO : récupérer le nom du réseau scanné
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = medium_large_text
                 ),
+                textAlign = TextAlign.Center,
                 color = Color.Black
             )
             Spacer(modifier = Modifier.height(extra_small_space))
             Box(
                 modifier = Modifier
-                    .width(giant_space)
+                    .width(extra_large_space)
                     .height(tiny_space)
+                    .align(Alignment.CenterHorizontally)
                     .background(CoralRed40)
             )
         }

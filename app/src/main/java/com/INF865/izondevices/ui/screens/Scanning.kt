@@ -180,7 +180,7 @@ fun ScanScreen(
             shape = RoundedCornerShape(extra_small_space)
         ) {
             Text(
-                text = if (isScanning) stringResource(id = R.string.scan_in_progress) else "Scan complete",
+                text = if (isScanning) stringResource(id = R.string.scan_in_progress) else "Scan complété",
                 color = Color.White,
                 modifier = Modifier.padding(
                     horizontal = large_space,
