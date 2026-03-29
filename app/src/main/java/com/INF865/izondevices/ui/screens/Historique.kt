@@ -31,6 +31,7 @@ import com.INF865.izondevices.ui.theme.CoralRed40
 import com.INF865.izondevices.ui.theme.CoralRed80Background
 import com.INF865.izondevices.ui.theme.extra_large_space
 import com.INF865.izondevices.ui.theme.extra_small_space
+import com.INF865.izondevices.ui.theme.extra_small_text
 import com.INF865.izondevices.ui.theme.icon_size_medium
 import com.INF865.izondevices.ui.theme.large_space
 import com.INF865.izondevices.ui.theme.medium_large_text
@@ -70,14 +71,14 @@ fun HistoriqueScreen(modifier: Modifier = Modifier) {
 
         LazyColumn(modifier = Modifier.padding(medium_space)) {
             items(7) { index ->
-                HistoryItem(index = 7 - index)
+                HistoryItem(name =  "Réseau ${index+1}", date = "03/0${7-index}/2025")
             }
         }
     }
 }
 
 @Composable
-fun HistoryItem(modifier: Modifier = Modifier, index: Int) {
+fun HistoryItem(modifier: Modifier = Modifier, name: String, date: String) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -86,7 +87,11 @@ fun HistoryItem(modifier: Modifier = Modifier, index: Int) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = "Réseau $index", fontSize = medium_small_text)
+            Row() {
+                Text(text = name, fontSize = medium_small_text)
+                Spacer(modifier = modifier.width(large_space))
+                Text(text = date, fontSize = extra_small_text)
+            }
             Icon(
                 painterResource(id = R.drawable.ic_chevron_right),
                 contentDescription = null,

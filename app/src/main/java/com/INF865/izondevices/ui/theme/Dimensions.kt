@@ -35,6 +35,7 @@ val border_thickness: Dp = 1.dp
 val elevation_none: Dp = 0.dp
 
 // Text size constants
+val extra_small_text: TextUnit = 10.sp
 val small_text: TextUnit = 12.sp
 val medium_small_text: TextUnit = 14.sp
 val medium_text: TextUnit = 18.sp

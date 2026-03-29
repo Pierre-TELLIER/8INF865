@@ -31,10 +31,12 @@ import com.INF865.izondevices.ui.theme.extra_large_space
 import com.INF865.izondevices.ui.theme.extra_small_space
 import com.INF865.izondevices.ui.theme.large_space
 import com.INF865.izondevices.ui.theme.medium_large_text
+import com.INF865.izondevices.ui.theme.medium_small_text
 import com.INF865.izondevices.ui.theme.medium_space
 import com.INF865.izondevices.ui.theme.placeholder_height
 import com.INF865.izondevices.ui.theme.small_medium_space
 import com.INF865.izondevices.ui.theme.small_space
+import com.INF865.izondevices.ui.theme.small_text
 import com.INF865.izondevices.ui.theme.tiny_space
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,15 +78,15 @@ fun CVEScreen(modifier: Modifier = Modifier, onBack: () -> Unit = {}) {
         )
 
         Column(modifier = Modifier.padding(medium_space)) {
-            CVESection(title = stringResource(id = R.string.description_label))
-            CVESection(title = stringResource(id = R.string.remediation_label))
-            CVESection(title = stringResource(id = R.string.details_label))
+            CVESection(title = stringResource(id = R.string.description_label), content = "Description de la vulnérabilité")
+            CVESection(title = stringResource(id = R.string.remediation_label), content = "Moyens de corriger la vulnérabilité")
+            CVESection(title = stringResource(id = R.string.details_label), content = "Plus d'informations sur la vulnérabilité")
         }
     }
 }
 
 @Composable
-fun CVESection(modifier: Modifier = Modifier, title: String) {
+fun CVESection(modifier: Modifier = Modifier, title: String, content: String) {
         Column(modifier = modifier.padding(vertical = small_space)) {
         Text(text = title, style = MaterialTheme.typography.labelLarge)
         Spacer(modifier = Modifier.height(extra_small_space))
@@ -94,6 +96,16 @@ fun CVESection(modifier: Modifier = Modifier, title: String) {
                 .height(placeholder_height)
                 .clip(RoundedCornerShape(small_medium_space))
                 .background(CoralRed80Background)
-        )
+        ) {
+            Text(
+                text = content,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = small_text
+                ),
+                textAlign = TextAlign.Center,
+                color = Color.Black,
+                modifier = Modifier.padding(extra_small_space)
+            )
+        }
     }
 }

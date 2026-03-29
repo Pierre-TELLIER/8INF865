@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -52,6 +53,8 @@ import com.INF865.izondevices.ui.theme.large_text
 import com.INF865.izondevices.ui.theme.medium_large_text
 import com.INF865.izondevices.ui.theme.medium_small_text
 import com.INF865.izondevices.ui.theme.medium_space
+import com.INF865.izondevices.ui.theme.small_medium_space
+import com.INF865.izondevices.ui.theme.small_space
 import com.INF865.izondevices.ui.theme.tiny_space
 
 @Composable
@@ -156,7 +159,7 @@ fun DeviceItem(
     Box(
         modifier = modifier
             .aspectRatio(1f)
-            .border(border_thickness, CoralRedDark)
+            .border(border_thickness, CoralRedDark, shape = RoundedCornerShape(extra_small_space))
             .clickable(onClick = onClick)
             .padding(medium_space),
         contentAlignment = Alignment.Center

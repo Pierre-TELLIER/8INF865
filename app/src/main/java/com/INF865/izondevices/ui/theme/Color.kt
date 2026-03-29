@@ -18,6 +18,8 @@ val CoralRed80Background = Color(0x40C2194F)
 val CoralRed40Background = Color(0x4096123C)
 
 val CoralRedSelectedBackground = Color(0x30C2194F)
+val CoralRedSwitchOnBackground = Color(0x7096123C)
+
 
 val CoralRedAppBackground = Color(0x12FA2F65)
 val GreyBarBackground = Color(0x122B2B2B)

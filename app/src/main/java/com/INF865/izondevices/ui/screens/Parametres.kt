@@ -13,16 +13,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -33,14 +38,18 @@ import com.INF865.izondevices.ui.theme.CoralRed40
 import com.INF865.izondevices.ui.theme.CoralRed40Background
 import com.INF865.izondevices.ui.theme.CoralRed80
 import com.INF865.izondevices.ui.theme.CoralRed80Background
+import com.INF865.izondevices.ui.theme.CoralRedSelectedBackground
+import com.INF865.izondevices.ui.theme.CoralRedSwitchOnBackground
 import com.INF865.izondevices.ui.theme.bar_width_large
 import com.INF865.izondevices.ui.theme.extra_large_space
 import com.INF865.izondevices.ui.theme.extra_small_space
-import com.INF865.izondevices.ui.theme.grid_spacing
+import com.INF865.izondevices.ui.theme.extra_small_text
 import com.INF865.izondevices.ui.theme.huge_space
 import com.INF865.izondevices.ui.theme.icon_size_medium
+import com.INF865.izondevices.ui.theme.icon_size_small
 import com.INF865.izondevices.ui.theme.large_space
 import com.INF865.izondevices.ui.theme.medium_large_text
+import com.INF865.izondevices.ui.theme.medium_small_text
 import com.INF865.izondevices.ui.theme.medium_space
 import com.INF865.izondevices.ui.theme.small_medium_space
 import com.INF865.izondevices.ui.theme.small_space
@@ -55,7 +64,8 @@ fun ParametresScreen(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = large_space, vertical = large_space),
-        horizontalAlignment = Alignment.CenterHorizontally) {
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = stringResource(id = R.string.parameters_title),
@@ -77,15 +87,33 @@ fun ParametresScreen(modifier: Modifier = Modifier) {
         }
 
         LazyColumn(modifier = Modifier.padding(medium_space)) {
-            items(6) { index ->
-                ParametreItem(index = index + 1)
+            items(7) { index ->
+                when (index + 1) {
+                    1, 2 -> {
+                        ParametreItem(name = "Paramètre $index", type = "edit")
+                    }
+
+                    3 -> {
+                        ParametreItem(name = "Paramètre $index", type = "switch")
+                    }
+
+                    4, 5, 6 -> {
+                        ParametreItem(name = "Paramètre $index", type = "basic")
+                    }
+
+                    else -> {
+                        ParametreItem(name = "Paramètre $index", type = "test")
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun ParametreItem(modifier: Modifier = Modifier, index: Int) {
+fun ParametreItem(modifier: Modifier = Modifier, name: String, type: String = "basic") {
+    var checked by remember { mutableStateOf(false) }
+
     Column(modifier = modifier.fillMaxSize()) {
         Row(
             modifier = modifier
@@ -94,35 +122,29 @@ fun ParametreItem(modifier: Modifier = Modifier, index: Int) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = "Param$index", fontSize = small_text)
-            Box(
-                modifier = Modifier
-                    .width(bar_width_large)
-                    .height(small_space)
-                    .background(CoralRed40Background)
-            )
+            Text(text = name, fontSize = medium_small_text)
 
-            when (index) {
-                3 -> {
-                    Box(
-                        modifier = Modifier
-                            .width(huge_space)
-                            .height(grid_spacing)
-                            .clip(CircleShape)
-                            .background(CoralRed40Background),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .padding(tiny_space)
-                                .size(medium_space)
-                                .clip(CircleShape)
-                                .background(CoralRed80)
+            when (type) {
+                "switch" -> {
+                    Box(modifier = Modifier.width(huge_space), contentAlignment = Alignment.BottomEnd) {
+                        Switch(
+                            modifier = modifier.size(icon_size_medium).scale(0.8f),
+                            checked = checked,
+                            onCheckedChange = {checked = it},
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = CoralRed80,
+                                checkedTrackColor = CoralRedSwitchOnBackground,
+                                checkedBorderColor = CoralRed80,
+                                uncheckedThumbColor = CoralRed80,
+                                uncheckedTrackColor = CoralRed80Background,
+                                uncheckedBorderColor = CoralRed80
+                            )
                         )
                     }
                 }
 
-                1, 2 -> {
+                "edit" -> {
+                    Text(text = "Current value", fontSize = extra_small_text)
                     Box(modifier = Modifier.width(huge_space), contentAlignment = Alignment.BottomEnd)
                     {
                         Icon(
@@ -134,11 +156,22 @@ fun ParametreItem(modifier: Modifier = Modifier, index: Int) {
                     }
                 }
 
-                else -> {
+                "basic" -> {
                     Box(modifier = Modifier.width(huge_space), contentAlignment = Alignment.BottomEnd)
                     {
                         Icon(
                             painterResource(id = R.drawable.ic_chevron_right),
+                            contentDescription = null,
+                            modifier = Modifier.size(icon_size_medium),
+                            tint = CoralRed40
+                        )
+                    }
+                }
+                else -> {
+                    Box(modifier = Modifier.width(huge_space), contentAlignment = Alignment.BottomEnd)
+                    {
+                        Icon(
+                            painterResource(id = R.drawable.question_mark),
                             contentDescription = null,
                             modifier = Modifier.size(icon_size_medium),
                             tint = CoralRed40
