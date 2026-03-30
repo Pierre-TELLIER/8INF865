@@ -12,15 +12,14 @@ import android.net.wifi.WifiManager
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import com.INF865.izondevices.R
 import com.INF865.izondevices.model.Network
 import com.INF865.izondevices.model.NetworkDevice
 import com.INF865.izondevices.scanner.*
 import java.io.Closeable
-import java.net.HttpURLConnection
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.NetworkInterface
-import java.net.URL
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -30,6 +29,7 @@ import java.util.concurrent.TimeoutException
 class LocalNetworkScanner(private val context: Context) : Closeable {
     private val coordinatorExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val probeExecutor: ExecutorService = Executors.newFixedThreadPool(PROBE_THREADS)
+    private val ouiLines: List<String> by lazy { loadOuiLines() }
 
     fun scanNetwork(): CompletableFuture<Network?> {
         return CompletableFuture.supplyAsync(
@@ -102,21 +102,7 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
                             if ((device.macAddress ?: INVALID_MAC) == INVALID_MAC) {
                                 return@submit
                             }
-                            val url = URL(
-                                "https://api.maclookup.app/v2/macs/" + device.macAddress?.replace(
-                                    ":",
-                                    ""
-                                )
-                            )
-                            with(url.openConnection() as HttpURLConnection) {
-                                requestMethod = "GET"
-                                if (responseCode != HttpURLConnection.HTTP_OK) {
-                                    println("?NOK !!! $responseCode")
-                                    return@submit
-                                }
-                                val response = inputStream.bufferedReader().readText()
-                                print(response)
-                            }
+                            device.constructor = findOuiLineForMac(device.macAddress)
                         } catch (e: TimeoutException) {
                             e.printStackTrace()
                         }
@@ -134,7 +120,8 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
                 reachableDevices += NetworkDevice(
                     ipAddress = ownIpAddress,
                     macAddress = ownMacAddress,
-                    hostName = getHostnameFromNetwork()
+                    hostName = getHostnameFromNetwork(),
+                    constructor = findOuiLineForMac(ownMacAddress)
                 )
 
                 Network(
@@ -171,16 +158,17 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
                 .build()
 
             val futureSSID = CompletableFuture<String>()
-            val networkCallback = object : ConnectivityManager.NetworkCallback(FLAG_INCLUDE_LOCATION_INFO) {
-                fun onCapabilitiesChanged(
-                    unused: Network,
-                    networkCapabilities: NetworkCapabilities
-                ) {
-                    val wifiInfo = networkCapabilities.transportInfo as WifiInfo
-                    futureSSID.complete(wifiInfo.ssid.replace("\"", ""))
-                    connectivityManager.unregisterNetworkCallback(this)
-                }
-            };
+            val networkCallback =
+                object : ConnectivityManager.NetworkCallback(FLAG_INCLUDE_LOCATION_INFO) {
+                    fun onCapabilitiesChanged(
+                        unused: Network,
+                        networkCapabilities: NetworkCapabilities
+                    ) {
+                        val wifiInfo = networkCapabilities.transportInfo as WifiInfo
+                        futureSSID.complete(wifiInfo.ssid.replace("\"", ""))
+                        connectivityManager.unregisterNetworkCallback(this)
+                    }
+                };
             connectivityManager.requestNetwork(request, networkCallback);
             connectivityManager.registerNetworkCallback(request, networkCallback);
 
@@ -296,6 +284,29 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
                 }
                 .toMap()
         }.getOrDefault(emptyMap())
+    }
+
+    private fun findOuiLineForMac(macAddress: String?): String? {
+        val ouiPrefix = macAddress
+            ?.replace(":", "")
+            ?.uppercase()
+            ?.take(6)
+            ?: return null
+
+        return ouiLines.firstOrNull { line ->
+            val firstSpace = line.indexOf(' ')
+            if (firstSpace <= 0) {
+                false
+            } else {
+                val ouiPart = line.substring(0, firstSpace)
+                ouiPart.split(',').any { it.trim().uppercase() == ouiPrefix }
+            }
+        }?.split(" ")[1]
+    }
+
+    private fun loadOuiLines(): List<String> {
+        return context.resources.openRawResource(R.raw.oui).bufferedReader()
+            .use { it.readLines().filterNotNull() }
     }
 
     private fun isUsableIpv4LinkAddress(linkAddress: LinkAddress): Boolean {

@@ -215,7 +215,7 @@ fun DeviceInfoScreen(
                     }
                     Spacer(modifier = Modifier.height(extra_small_space))
                     Text(
-                        text = "More info on device",
+                        text = device.constructor ?: "Constructeur inconnu",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
