@@ -132,14 +132,6 @@ fun DeviceInfoScreen(
                 textAlign = TextAlign.Center,
                 color = Color.Black
             )
-            Icon(
-                painterResource(id = R.drawable.ic_refresh),
-                contentDescription = "Refresh",
-                modifier = Modifier
-                    .clickable(onClick = { })
-                    .align(Alignment.CenterEnd),
-                tint = CoralRed40
-            )
         }
         Spacer(modifier = Modifier.height(extra_small_space))
         Box(

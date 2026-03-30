@@ -12,7 +12,7 @@
     <string name="vulnerabilities_label">Vulnerabilités</string>
     <string name="actions_label">Actions</string>
     <string name="ping_label">Ping</string>
-    <string name="port_scan_label">Port scan</string>
+    <string name="port_scan_label">Scanner</string>
     <string name="vulnerability_title">Vulnérabilité 1</string>
     <string name="description_label">Description</string>
     <string name="remediation_label">Remédiation</string>

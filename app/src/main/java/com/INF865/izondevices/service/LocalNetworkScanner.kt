@@ -130,9 +130,10 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
                     )
                 }
 
+                val ownMacAddress = getOwnMacAddress(ownIpAddress)
                 reachableDevices += NetworkDevice(
                     ipAddress = ownIpAddress,
-                    macAddress = resolveOwnMacAddress(subnet.address), // Not working ?!
+                    macAddress = ownMacAddress,
                     hostName = getHostnameFromNetwork()
                 )
 
@@ -153,6 +154,11 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
             probeExecutor.awaitTermination(TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             coordinatorExecutor.awaitTermination(TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         }
+    }
+
+    private fun getOwnMacAddress(ip: String): String? {
+        return execCommand("ifconfig | grep -B 1 ${ip} | head -n 1 | awk -F' ' '{ print \$5 }'")
+            .firstOrNull()
     }
 
     private fun getWifiSSID(): String? {
