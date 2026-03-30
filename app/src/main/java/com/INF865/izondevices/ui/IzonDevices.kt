@@ -4,12 +4,15 @@ import android.content.Context
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -24,6 +27,7 @@ import com.INF865.izondevices.ui.screens.HistoriqueScreen
 import com.INF865.izondevices.ui.screens.ScanScreen
 import com.INF865.izondevices.ui.theme.*
 import androidx.core.content.edit
+import com.INF865.izondevices.R
 import com.INF865.izondevices.model.Network
 import kotlinx.serialization.json.Json
 
@@ -36,6 +40,9 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
     
     // Shared state for the latest scan results, persisted in SharedPreferences
     var latestScanResult by remember { mutableStateOf(loadLatestScan(context)) }
+
+    val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
+    prefs.edit { putString("theme_mode", isSystemInDarkTheme().toString()) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -127,11 +134,19 @@ fun IzonBottomNavigation(
         tonalElevation = elevation_none
     ) {
         NavigationBarItem(
+            selected = currentRoute == NavScreen.Historique.route,
+            onClick = { onScreenSelected(NavScreen.Historique) },
+            icon = { BottomNavIcon(menu = "history") },
+            colors = NavigationBarItemDefaults.colors(
+                indicatorColor = CoralRedSelectedBackground
+            )
+        )
+        NavigationBarItem(
             selected = currentRoute == NavScreen.MainMenu.route || 
                        currentRoute?.startsWith("device_info") == true || 
                        currentRoute == NavScreen.CVE.route,
             onClick = { onScreenSelected(NavScreen.MainMenu) },
-            icon = { BottomNavIconPlaceholder(shape = "triangle_up") },
+            icon = { BottomNavIcon(menu = "home") },
             colors = NavigationBarItemDefaults.colors(
                 indicatorColor = CoralRedSelectedBackground
             )
@@ -139,15 +154,7 @@ fun IzonBottomNavigation(
         NavigationBarItem(
             selected = currentRoute == NavScreen.Parametres.route,
             onClick = { onScreenSelected(NavScreen.Parametres) },
-            icon = { BottomNavIconPlaceholder(shape = "square_x") },
-            colors = NavigationBarItemDefaults.colors(
-                indicatorColor = CoralRedSelectedBackground
-            )
-        )
-        NavigationBarItem(
-            selected = currentRoute == NavScreen.Historique.route,
-            onClick = { onScreenSelected(NavScreen.Historique) },
-            icon = { BottomNavIconPlaceholder(shape = "triangle_down") },
+            icon = { BottomNavIcon(menu = "settings") },
             colors = NavigationBarItemDefaults.colors(
                 indicatorColor = CoralRedSelectedBackground
             )
@@ -156,22 +163,24 @@ fun IzonBottomNavigation(
 }
 
 @Composable
-fun BottomNavIconPlaceholder(modifier: Modifier = Modifier, shape: String) {
+fun BottomNavIcon(modifier: Modifier = Modifier, menu: String) {
+    val icon = when (menu) {
+        "home" -> {R.drawable.ic_home}
+        "history" -> {R.drawable.ic_history}
+        "settings" -> {R.drawable.ic_settings}
+        else -> {R.drawable.ic_question_mark}
+    }
     Box(
         modifier = modifier
             .size(huge_space)
-            .border(border_thickness, CoralRed40),
+            .border(border_thickness, CoralRed40, shape = CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = when (shape) {
-                "triangle_up" -> "▲"
-                "square_x" -> "⊠"
-                "triangle_down" -> "▼"
-                else -> ""
-            },
-            color = CoralRed80,
-            fontSize = big_text
+        Icon(
+            painterResource(id = icon),
+            contentDescription = null,
+            modifier = Modifier.size(icon_size_large),
+            tint = CoralRed40
         )
     }
 }

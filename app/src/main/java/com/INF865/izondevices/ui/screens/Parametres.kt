@@ -1,6 +1,8 @@
 package com.INF865.izondevices.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,10 +31,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.core.content.edit
 import com.INF865.izondevices.R
 import com.INF865.izondevices.ui.theme.CoralRed40
 import com.INF865.izondevices.ui.theme.CoralRed80
@@ -43,6 +47,7 @@ import com.INF865.izondevices.ui.theme.extra_small_space
 import com.INF865.izondevices.ui.theme.extra_small_text
 import com.INF865.izondevices.ui.theme.huge_space
 import com.INF865.izondevices.ui.theme.icon_size_medium
+import com.INF865.izondevices.ui.theme.icon_size_small
 import com.INF865.izondevices.ui.theme.large_space
 import com.INF865.izondevices.ui.theme.medium_large_text
 import com.INF865.izondevices.ui.theme.medium_small_text
@@ -88,7 +93,7 @@ fun ParametresScreen(modifier: Modifier = Modifier) {
                     }
 
                     3 -> {
-                        ParametreItem(name = "Paramètre $index", type = "switch")
+                        ParametreItem(name = "Mode sombre", type = "switch")
                     }
 
                     4, 5, 6 -> {
@@ -106,7 +111,12 @@ fun ParametresScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun ParametreItem(modifier: Modifier = Modifier, name: String, type: String = "basic") {
-    var checked by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
+    val isDarkStr = prefs.getString("theme_mode", null)
+    val isDark = if (isDarkStr == "true") true else false
+    var checked by remember { mutableStateOf(isDark) }
+    val onChecked: (checked: Boolean) -> Unit  = { prefs.edit { putString("theme_mode", checked.toString()) } }
 
     Column(modifier = modifier.fillMaxSize()) {
         Row(
@@ -124,7 +134,7 @@ fun ParametreItem(modifier: Modifier = Modifier, name: String, type: String = "b
                         Switch(
                             modifier = modifier.size(icon_size_medium).scale(0.8f),
                             checked = checked,
-                            onCheckedChange = {checked = it},
+                            onCheckedChange = {checked = it; onChecked(checked) },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = CoralRed80,
                                 checkedTrackColor = CoralRedSwitchOnBackground,
@@ -132,7 +142,26 @@ fun ParametreItem(modifier: Modifier = Modifier, name: String, type: String = "b
                                 uncheckedThumbColor = CoralRed80,
                                 uncheckedTrackColor = CoralRed80Background,
                                 uncheckedBorderColor = CoralRed80
-                            )
+                            ),
+                            thumbContent = if (checked) {
+                                {
+                                    Icon(
+                                        painterResource(id = R.drawable.ic_dark_mode),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(icon_size_small),
+                                        tint = Color.Black
+                                    )
+                                }
+                            } else {
+                                {
+                                    Icon(
+                                        painterResource(id = R.drawable.ic_light_mode),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(icon_size_small),
+                                        tint = Color.White
+                                    )
+                                }
+                            }
                         )
                     }
                 }
