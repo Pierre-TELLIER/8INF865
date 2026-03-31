@@ -1,5 +1,6 @@
 package com.INF865.izondevices.ui.screens
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -27,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.INF865.izondevices.R
+import com.INF865.izondevices.model.Scan
 import com.INF865.izondevices.ui.theme.CoralRed40
 import com.INF865.izondevices.ui.theme.CoralRed80Background
 import com.INF865.izondevices.ui.theme.extra_large_space
@@ -43,12 +46,16 @@ import com.INF865.izondevices.ui.theme.tiny_space
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoriqueScreen(modifier: Modifier = Modifier) {
+fun HistoriqueScreen(
+    scans: List<Scan>,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = large_space, vertical = large_space),
-        horizontalAlignment = Alignment.CenterHorizontally) {
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = stringResource(id = R.string.history_scans_title),
@@ -70,8 +77,11 @@ fun HistoriqueScreen(modifier: Modifier = Modifier) {
         }
 
         LazyColumn(modifier = Modifier.padding(medium_space)) {
-            items(7) { index ->
-                HistoryItem(name =  "Réseau ${index+1}", date = "03/0${7-index}/2025")
+            items(scans.reversed()) { scan ->
+                HistoryItem(
+                    name = scan.scannedNetwork.networkName ?: scan.scannedNetwork.networkAddress,
+                    date = DateFormat.format("HH:mm dd/MM/yyyy", scan.date).toString()
+                )
             }
         }
     }

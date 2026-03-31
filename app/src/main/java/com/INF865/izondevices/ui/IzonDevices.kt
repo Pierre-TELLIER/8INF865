@@ -110,7 +110,7 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
                 ParametresScreen()
             }
             composable(NavScreen.Historique.route) {
-                HistoriqueScreen()
+                HistoriqueScreen(latestScanResults)
             }
             composable(NavScreen.Scan.route) {
                 ScanScreen(
@@ -264,7 +264,28 @@ fun ParametresPreview() {
 @Composable
 fun HistoriquePreview() {
     IzondevicesTheme {
-        HistoriqueScreen()
+        HistoriqueScreen(
+            listOf(
+                Scan.fromNow(
+                    Network(
+                        networkAddress = "192.168.1.0",
+                        networkName = "My SSID",
+                        devices = listOf(
+                            NetworkDevice(
+                                ipAddress = "192.168.1.10",
+                                macAddress = "AA:BB:CC:DD:EE:01",
+                                hostName = "Printer"
+                            ),
+                            NetworkDevice(
+                                ipAddress = "192.168.1.20",
+                                macAddress = "AA:BB:CC:DD:EE:02",
+                                hostName = "Laptop"
+                            )
+                        )
+                    )
+                )
+            )
+        )
     }
 }
 
