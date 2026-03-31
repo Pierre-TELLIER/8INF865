@@ -128,20 +128,7 @@ fun MainMenuScreen(
         Spacer(modifier = Modifier.height(medium_space))
 
         Column(modifier = Modifier.fillMaxWidth()) {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = CoralRed40,
-                    thickness = divider_thickness
-                )
-                Spacer(modifier = Modifier.width(grid_spacing))
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = CoralRed40,
-                    thickness = divider_thickness
-                )
-            }
-            Spacer(modifier = Modifier.height(extra_large_space))
+            Spacer(modifier = Modifier.height(large_space))
 
             Button(
                 onClick = onScanClick,
