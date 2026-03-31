@@ -149,7 +149,7 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
     private fun getWifiSSID(): String? {
         return runCatching {
                 val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
-                return wifiManager.connectionInfo?.ssid
+                return wifiManager.connectionInfo?.ssid?.replace("\"", "")
         }.getOrNull()
     }
 

@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import com.INF865.izondevices.R
 import com.INF865.izondevices.model.Network
 import com.INF865.izondevices.model.NetworkDevice
+import com.INF865.izondevices.model.Scan
 import com.INF865.izondevices.ui.theme.CoralRed40
 import com.INF865.izondevices.ui.theme.CoralRed80Background
 import com.INF865.izondevices.ui.theme.CoralRedDark
@@ -60,7 +61,7 @@ import com.INF865.izondevices.ui.theme.tiny_space
 
 @Composable
 fun MainMenuScreen(
-    network: Network,
+    scan: Scan?,
     modifier: Modifier = Modifier,
     onDeviceClick: (NetworkDevice) -> Unit = {},
     onScanClick: () -> Unit = {}
@@ -71,33 +72,46 @@ fun MainMenuScreen(
             .padding(horizontal = large_space, vertical = large_space),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = " " + stringResource(id = R.string.reseau_label) + " " + (network.networkName?: ""), // TODO : récupérer le nom du réseau scanné
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = medium_large_text
-                ),
-                textAlign = TextAlign.Center,
-                color = Color.Black
-            )
-            Spacer(modifier = Modifier.height(extra_small_space))
-            Box(
-                modifier = Modifier
-                    .width(extra_large_space)
-                    .height(tiny_space)
-                    .align(Alignment.CenterHorizontally)
-                    .background(CoralRed40)
-            )
-        }
 
-        Spacer(modifier = Modifier.height(huge_space))
+        if (scan == null) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Spacer(modifier = Modifier.height(extra_small_space))
+                Box(
+                    modifier = Modifier
+                        .width(extra_large_space)
+                        .height(tiny_space)
+                        .align(Alignment.CenterHorizontally)
+                        .background(CoralRed40)
+                )
+            }
 
-        if (network.devices.isEmpty()) {
+            Spacer(modifier = Modifier.height(huge_space))
+
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Text(text = "Aucun scan récent", color = Color.DarkGray)
             }
         } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = " " + stringResource(id = R.string.reseau_label) + " " + (scan.scannedNetwork.networkName?: ""), // TODO : récupérer le nom du réseau scanné
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = medium_large_text
+                    ),
+                    textAlign = TextAlign.Center,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(extra_small_space))
+                Box(
+                    modifier = Modifier
+                        .width(extra_large_space)
+                        .height(tiny_space)
+                        .align(Alignment.CenterHorizontally)
+                        .background(CoralRed40)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(huge_space))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier.weight(1f),
@@ -105,7 +119,7 @@ fun MainMenuScreen(
                 verticalArrangement = Arrangement.spacedBy(grid_spacing),
                 contentPadding = PaddingValues(bottom = medium_space)
             ) {
-                items(network.devices) { device ->
+                items(scan.scannedNetwork.devices) { device ->
                     DeviceItem(device = device, onClick = { onDeviceClick(device) })
                 }
             }

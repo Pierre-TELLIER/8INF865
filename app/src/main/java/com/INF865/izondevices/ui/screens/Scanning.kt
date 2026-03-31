@@ -45,6 +45,7 @@ import androidx.core.content.ContextCompat
 import com.INF865.izondevices.R
 import com.INF865.izondevices.model.Network
 import com.INF865.izondevices.model.NetworkDevice
+import com.INF865.izondevices.model.Scan
 import com.INF865.izondevices.service.NetworkScanService
 import com.INF865.izondevices.ui.theme.CoralRed40
 import com.INF865.izondevices.ui.theme.CoralRed80Background
@@ -68,9 +69,9 @@ import java.util.concurrent.CompletableFuture
 
 @Composable
 fun ScanScreen(
-    modifier: Modifier = Modifier, 
+    modifier: Modifier = Modifier,
     onCancel: () -> Unit = {},
-    onScanFinished: (Network) -> Unit = {}
+    onScanFinished: (Scan) -> Unit = {}
 ) {
     val context = LocalContext.current
     val isPreview = LocalInspectionMode.current
@@ -85,7 +86,7 @@ fun ScanScreen(
     }
     var isScanning by remember { mutableStateOf(!isPreview) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var network by remember { mutableStateOf<Network?>(null) }
+    var scan by remember { mutableStateOf<Scan?>(null) }
     var permissionsGranted by remember {
         mutableStateOf(hasRequiredPermissions(context, requiredPermissions))
     }
@@ -116,10 +117,20 @@ fun ScanScreen(
 
     DisposableEffect(context, isPreview, permissionsGranted) {
         if (isPreview) {
-            network = Network(
-                "192.168.1.0", "Local network", listOf(
-                    NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01", hostName = "Printer"),
-                    NetworkDevice(ipAddress = "192.168.1.20", macAddress = "AA:BB:CC:DD:EE:02", hostName = "Laptop")
+            scan = Scan.fromNow(
+                Network(
+                    "192.168.1.0", "Local network", listOf(
+                        NetworkDevice(
+                            ipAddress = "192.168.1.10",
+                            macAddress = "AA:BB:CC:DD:EE:01",
+                            hostName = "Printer"
+                        ),
+                        NetworkDevice(
+                            ipAddress = "192.168.1.20",
+                            macAddress = "AA:BB:CC:DD:EE:02",
+                            hostName = "Laptop"
+                        )
+                    )
                 )
             )
             isScanning = false
@@ -141,10 +152,10 @@ fun ScanScreen(
                     future.whenComplete { result, throwable ->
                         Handler(Looper.getMainLooper()).post {
                             isScanning = false
-                            if (throwable != null && !future.isCancelled) {
+                            if (throwable != null && !future.isCancelled || result == null) {
                                 errorMessage = throwable.message ?: "Scan failed"
                             } else if (!future.isCancelled) {
-                                network = result
+                                scan = Scan.fromNow(result)
                             }
                         }
                     }
@@ -200,7 +211,7 @@ fun ScanScreen(
                 CircularProgressIndicator(color = CoralRed40, strokeWidth = tiny_space)
             } else {
                 Text(
-                    text = "${network?.devices?.size ?: 0} appareils",
+                    text = "${scan?.scannedNetwork?.devices?.size ?: 0} appareils",
                     color = Color.DarkGray,
                     fontSize = large_text,
                     fontWeight = FontWeight.Bold
@@ -212,8 +223,8 @@ fun ScanScreen(
 
         Button(
             onClick = {
-                if (!isScanning && network != null) {
-                    onScanFinished(network!!)
+                if (!isScanning && scan != null) {
+                    onScanFinished(scan!!)
                 } else {
                     activeScan.value?.cancel(true)
                     onCancel()
@@ -235,13 +246,20 @@ fun ScanScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Column(modifier = Modifier.verticalScroll(rememberScrollState()).fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .fillMaxWidth()
+        ) {
             if (errorMessage != null) {
-                ScanStatusItem(text = errorMessage.orEmpty(), backgroundColor = CoralRedSelectedBackground)
-            } else if (network?.devices?.isEmpty() ?: true && !isScanning) {
+                ScanStatusItem(
+                    text = errorMessage.orEmpty(),
+                    backgroundColor = CoralRedSelectedBackground
+                )
+            } else if (scan?.scannedNetwork?.devices?.isEmpty() ?: true && !isScanning) {
                 ScanStatusItem(text = "No devices found")
             } else {
-                network?.devices?.forEach { device ->
+                scan?.scannedNetwork?.devices?.forEach { device ->
                     val macLabel = device.macAddress ?: "Unknown MAC"
                     ScanStatusItem(text = "${device.ipAddress} - $macLabel (${device.hostName ?: "No hostname"})")
                 }

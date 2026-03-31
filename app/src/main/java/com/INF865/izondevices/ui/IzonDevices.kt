@@ -29,7 +29,9 @@ import com.INF865.izondevices.ui.theme.*
 import androidx.core.content.edit
 import com.INF865.izondevices.R
 import com.INF865.izondevices.model.Network
+import com.INF865.izondevices.model.Scan
 import kotlinx.serialization.json.Json
+import java.util.Date
 
 @Composable
 fun IzonDevicesApp(modifier: Modifier = Modifier) {
@@ -37,9 +39,10 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    
+
     // Shared state for the latest scan results, persisted in SharedPreferences
-    var latestScanResult by remember { mutableStateOf(loadLatestScan(context)) }
+    var latestScanResults by remember { mutableStateOf(loadLatestScans(context)) }
+    var latestScan = latestScanResults.lastOrNull()
 
     val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
     prefs.edit { putString("theme_mode", isSystemInDarkTheme().toString()) }
@@ -48,11 +51,12 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxSize(),
         containerColor = CoralRedAppBackground,
         bottomBar = {
-            if (currentRoute == NavScreen.MainMenu.route || 
-                currentRoute?.startsWith("device_info") == true || 
+            if (currentRoute == NavScreen.MainMenu.route ||
+                currentRoute?.startsWith("device_info") == true ||
                 currentRoute == NavScreen.CVE.route ||
                 currentRoute == NavScreen.Parametres.route ||
-                currentRoute == NavScreen.Historique.route) {
+                currentRoute == NavScreen.Historique.route
+            ) {
                 IzonBottomNavigation(
                     currentRoute = currentRoute,
                     onScreenSelected = { screen ->
@@ -79,16 +83,16 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
         ) {
             composable(NavScreen.MainMenu.route) {
                 MainMenuScreen(
-                    network = latestScanResult,
-                    onDeviceClick = { device -> 
-                        navController.navigate(NavScreen.DeviceInfo.createRoute(device.ipAddress)) 
+                    scan = latestScan,
+                    onDeviceClick = { device ->
+                        navController.navigate(NavScreen.DeviceInfo.createRoute(device.ipAddress))
                     },
                     onScanClick = { navController.navigate(NavScreen.Scan.route) }
                 )
             }
             composable(NavScreen.DeviceInfo.route) { backStackEntry ->
                 val ip = backStackEntry.arguments?.getString("ip")
-                val device = latestScanResult.devices.find { it.ipAddress == ip }
+                val device = latestScan?.scannedNetwork?.devices?.find { it.ipAddress == ip }
                 if (device != null) {
                     DeviceInfoScreen(
                         device = device,
@@ -111,9 +115,9 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
             composable(NavScreen.Scan.route) {
                 ScanScreen(
                     onCancel = { navController.popBackStack() },
-                    onScanFinished = { network ->
-                        latestScanResult = network
-                        saveLatestScan(context, network)
+                    onScanFinished = { scan ->
+                        latestScanResults += scan
+                        saveLatestScans(context, latestScanResults)
                         navController.popBackStack()
                     }
                 )
@@ -142,9 +146,9 @@ fun IzonBottomNavigation(
             )
         )
         NavigationBarItem(
-            selected = currentRoute == NavScreen.MainMenu.route || 
-                       currentRoute?.startsWith("device_info") == true || 
-                       currentRoute == NavScreen.CVE.route,
+            selected = currentRoute == NavScreen.MainMenu.route ||
+                    currentRoute?.startsWith("device_info") == true ||
+                    currentRoute == NavScreen.CVE.route,
             onClick = { onScreenSelected(NavScreen.MainMenu) },
             icon = { BottomNavIcon(menu = "home") },
             colors = NavigationBarItemDefaults.colors(
@@ -165,10 +169,21 @@ fun IzonBottomNavigation(
 @Composable
 fun BottomNavIcon(modifier: Modifier = Modifier, menu: String) {
     val icon = when (menu) {
-        "home" -> {R.drawable.ic_home}
-        "history" -> {R.drawable.ic_history}
-        "settings" -> {R.drawable.ic_settings}
-        else -> {R.drawable.ic_question_mark}
+        "home" -> {
+            R.drawable.ic_home
+        }
+
+        "history" -> {
+            R.drawable.ic_history
+        }
+
+        "settings" -> {
+            R.drawable.ic_settings
+        }
+
+        else -> {
+            R.drawable.ic_question_mark
+        }
     }
     Box(
         modifier = modifier
@@ -187,19 +202,19 @@ fun BottomNavIcon(modifier: Modifier = Modifier, menu: String) {
 
 // awful way to save the latest scan result...
 // but cheap and easy
-private fun saveLatestScan(context: Context, network: Network) {
+private fun saveLatestScans(context: Context, scan: List<Scan>) {
     val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
-    val data = Json.encodeToString(network)
+    val data = Json.encodeToString(scan)
     prefs.edit { putString("latest_scan", data) }
 }
 
-private fun loadLatestScan(context: Context): Network {
+private fun loadLatestScans(context: Context): MutableList<Scan> {
     val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
-    val invalid_network = Network("", null, emptyList())
-    val data = prefs.getString("latest_scan", null) ?: return invalid_network
+    val invalid_scan = mutableListOf<Scan>()
+    val data = prefs.getString("latest_scan", null) ?: return invalid_scan
     return runCatching {
-        Json.decodeFromString<Network>(data)
-    }.getOrDefault(invalid_network)
+        Json.decodeFromString<MutableList<Scan>>(data)
+    }.getOrDefault(invalid_scan)
 }
 
 @Preview(showBackground = true)
@@ -207,12 +222,22 @@ private fun loadLatestScan(context: Context): Network {
 fun MainMenuPreview() {
     IzondevicesTheme {
         MainMenuScreen(
-            Network(
-                networkAddress = "192.168.1.0",
-                networkName = "My SSID",
-                devices = listOf(
-                    NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01", hostName = "Printer"),
-                    NetworkDevice(ipAddress = "192.168.1.20", macAddress = "AA:BB:CC:DD:EE:02", hostName = "Laptop")
+            Scan.fromNow(
+                Network(
+                    networkAddress = "192.168.1.0",
+                    networkName = "My SSID",
+                    devices = listOf(
+                        NetworkDevice(
+                            ipAddress = "192.168.1.10",
+                            macAddress = "AA:BB:CC:DD:EE:01",
+                            hostName = "Printer"
+                        ),
+                        NetworkDevice(
+                            ipAddress = "192.168.1.20",
+                            macAddress = "AA:BB:CC:DD:EE:02",
+                            hostName = "Laptop"
+                        )
+                    )
                 )
             )
         )
@@ -247,7 +272,13 @@ fun HistoriquePreview() {
 @Composable
 fun DeviceInfoPreview() {
     IzondevicesTheme {
-        DeviceInfoScreen(NetworkDevice(ipAddress = "192.168.1.10", macAddress = "AA:BB:CC:DD:EE:01", hostName = "Printer"))
+        DeviceInfoScreen(
+            NetworkDevice(
+                ipAddress = "192.168.1.10",
+                macAddress = "AA:BB:CC:DD:EE:01",
+                hostName = "Printer"
+            )
+        )
     }
 }
 
