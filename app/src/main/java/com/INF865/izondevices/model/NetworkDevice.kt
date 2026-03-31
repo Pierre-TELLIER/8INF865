@@ -10,4 +10,5 @@ data class NetworkDevice(
     var constructor: String? = null,
     var model: String? = null,
     var openPorts: List<Int> = emptyList(),
+    var vulnerabilities: MutableList<Vulnerability> = mutableListOf()
 )

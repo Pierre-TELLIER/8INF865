@@ -21,10 +21,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -44,7 +44,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,6 +55,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.INF865.izondevices.R
 import com.INF865.izondevices.model.NetworkDevice
+import com.INF865.izondevices.model.Vulnerability
+import com.INF865.izondevices.model.values.HTTP_EXPOSED
+import com.INF865.izondevices.model.values.TELNET_EXPOSED
 import com.INF865.izondevices.scanner.BRUTE_PORTS
 import com.INF865.izondevices.scanner.FUZZY_PORTS
 import com.INF865.izondevices.scanner.INVALID_MAC
@@ -130,6 +132,13 @@ fun DeviceInfoScreen(
                         device.openPorts = result ?: emptyList()
                         scannedPortsCount.value = ports.size + 1
                         remainingPortsCount.value = 0
+
+                        for (port in device.openPorts) {
+                            when (port) {
+                                23 -> device.vulnerabilities.add(TELNET_EXPOSED)
+                                80 -> device.vulnerabilities.add(HTTP_EXPOSED)
+                            }
+                        }
                     }
                 }
             }
@@ -140,7 +149,8 @@ fun DeviceInfoScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = large_space, vertical = large_space),
-        horizontalAlignment = Alignment.CenterHorizontally,) {
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth(),
@@ -173,185 +183,229 @@ fun DeviceInfoScreen(
                 .background(CoralRed40),
         )
         Spacer(modifier = Modifier.height(extra_small_space))
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(horizontal = medium_space)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Surface(
-                color = RedVulnerabilities, // TODO : adapt color with number of vulnerabilities found
-                shape = RoundedCornerShape(extra_small_space),
-                modifier = Modifier
-                    .padding(vertical = small_space)
-                    .width(bar_width_giant)
-                    .height(extra_large_space)
-            ) {
+            item {
+                Surface(
+                    color = if (device.vulnerabilities.isNotEmpty()) RedVulnerabilities else GreenVulnerabilities,
+                    shape = RoundedCornerShape(extra_small_space),
+                    modifier = Modifier
+                        .padding(vertical = small_space)
+                        .width(bar_width_giant)
+                        .height(extra_large_space)
+                ) {
+                    Text(
+                        text = "${device.vulnerabilities.size} vulnérabilité${if (device.vulnerabilities.size > 1) 's' else ""}",
+                        textAlign = TextAlign.Center,
+                        color = Color.White,
+                        modifier = Modifier.padding(
+                            horizontal = medium_space,
+                            vertical = extra_small_space
+                        ),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            item {
                 Text(
-                    text = stringResource(id = R.string.vulnerabilities_detected),
-                    textAlign = TextAlign.Center,
-                    color = Color.White,
-                    modifier = Modifier.padding(
-                        horizontal = medium_space,
-                        vertical = extra_small_space
-                    ),
-                    style = MaterialTheme.typography.bodyMedium
+                    text = device.ipAddress,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.DarkGray
                 )
             }
 
-            Text(
-                text = device.ipAddress,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.DarkGray
-            )
+            item {
+                Spacer(modifier = Modifier.height(medium_space))
+            }
 
-            Spacer(modifier = Modifier.height(medium_space))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(mega_space)
-                        .clip(CircleShape)
-                        .background(CoralRed80Background),
-                    contentAlignment = Alignment.Center
+            item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_home), // Placeholder icon
-                        contentDescription = null,
-                        modifier = Modifier.size(extra_large_space),
-                        tint = CoralRed40
-                    )
-                }
-                Spacer(modifier = Modifier.width(medium_space))
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = device.hostName ?: "Inconnu", fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.width(extra_small_space))
+                    Box(
+                        modifier = Modifier
+                            .size(mega_space)
+                            .clip(CircleShape)
+                            .background(CoralRed80Background),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
-                            painterResource(id = R.drawable.ic_edit),
+                            painter = painterResource(id = R.drawable.ic_home),
                             contentDescription = null,
-                            modifier = Modifier.size(icon_size_small),
+                            modifier = Modifier.size(extra_large_space),
                             tint = CoralRed40
                         )
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(medium_space))
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = device.hostName ?: "Inconnu", fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.width(extra_small_space))
+                            Icon(
+                                painterResource(id = R.drawable.ic_edit),
+                                contentDescription = null,
+                                modifier = Modifier.size(icon_size_small),
+                                tint = CoralRed40
+                            )
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "MAC: ${device.macAddress ?: INVALID_MAC}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(extra_small_space))
                         Text(
-                            text = "MAC: ${device.macAddress ?: INVALID_MAC}",
-                            style = MaterialTheme.typography.bodyMedium
+                            text = device.constructor ?: "Constructeur inconnu",
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(large_space))
+            }
+
+            if (device.vulnerabilities.isNotEmpty()) {
+                item {
+                    Text(
+                        text = stringResource(id = R.string.vulnerabilities_label),
+                        modifier = Modifier.align(Alignment.Start),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.DarkGray,
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(small_space))
+                }
+
+                items(device.vulnerabilities) { vuln ->
+                    VulnerabilityItem(
+                        vuln = vuln,
+                        onClick = onVulnerabilityClick,
+                        modifier = Modifier
+                            .padding(horizontal = medium_space)
+                            .fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(small_space))
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(large_space))
+                }
+            }
+
+            item {
+                Text(
+                    text = stringResource(id = R.string.actions_label),
+                    modifier = Modifier.align(Alignment.Start),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(medium_space))
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    ActionButton(
+                        text = stringResource(id = R.string.ping_label),
+                        onClick = {
+                            coroutineScope.launch {
+                                val result = pingDevice(device)
+                                pingButtonColor.value =
+                                    if (result) GreenVulnerabilities else RedVulnerabilities
+                            }
+                        },
+                        backgroundColor = pingButtonColor.value ?: CoralRed80Background
+                    )
+                    Box {
+                        ActionButton(
+                            text = stringResource(id = R.string.port_scan_label),
+                            onClick = {
+                                if (!isPortScanning.value) {
+                                    showPortMenu.value = true
+                                }
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = showPortMenu.value,
+                            onDismissRequest = { showPortMenu.value = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Fuzzy ports") },
+                                onClick = {
+                                    showPortMenu.value = false
+                                    startPortScan(FUZZY_PORTS)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Brute ports") },
+                                onClick = {
+                                    showPortMenu.value = false
+                                    startPortScan(BRUTE_PORTS.toList())
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(small_space))
+            }
+
+            if (isPortScanning.value) {
+                item {
+                    CircularProgressIndicator(color = CoralRed40)
                     Spacer(modifier = Modifier.height(extra_small_space))
                     Text(
-                        text = device.constructor ?: "Constructeur inconnu",
+                        text = "Ports scannés: ${scannedPortsCount.value}",
+                        modifier = Modifier.align(Alignment.Start),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        text = "Ports restants: ${remainingPortsCount.value}",
+                        modifier = Modifier.align(Alignment.Start),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(large_space))
-
-            Text(
-                text = stringResource(id = R.string.vulnerabilities_label),
-                modifier = Modifier.align(Alignment.Start),
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.DarkGray,
-            )
-
-            Spacer(modifier = Modifier.height(small_space))
-
-            VulnerabilityItem(onClick = onVulnerabilityClick)
-            Spacer(modifier = Modifier.height(small_space))
-            VulnerabilityItem(onClick = onVulnerabilityClick)
-
-            Spacer(modifier = Modifier.height(large_space))
-
-            Text(
-                text = stringResource(id = R.string.actions_label),
-                modifier = Modifier.align(Alignment.Start),
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(modifier = Modifier.height(medium_space))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                ActionButton(
-                    text = stringResource(id = R.string.ping_label),
-                    onClick = {
-                        coroutineScope.launch {
-                            val result = pingDevice(device)
-                            pingButtonColor.value = if (result) GreenVulnerabilities else RedVulnerabilities
-                        }
-                    },
-                    backgroundColor = pingButtonColor.value ?: CoralRed80Background
-                )
-                Box {
-                    ActionButton(
-                        text = stringResource(id = R.string.port_scan_label),
-                        onClick = {
-                            if (!isPortScanning.value) {
-                                showPortMenu.value = true
-                            }
-                        }
+            if (device.openPorts.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Ports ouverts: ${device.openPorts.joinToString(", ")}",
+                        modifier = Modifier.align(Alignment.Start),
+                        style = MaterialTheme.typography.bodySmall,
                     )
-                    DropdownMenu(
-                        expanded = showPortMenu.value,
-                        onDismissRequest = { showPortMenu.value = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Fuzzy ports") },
-                            onClick = {
-                                showPortMenu.value = false
-                                startPortScan(FUZZY_PORTS)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Brute ports") },
-                            onClick = {
-                                showPortMenu.value = false
-                                startPortScan(BRUTE_PORTS.toList())
-                            }
-                        )
-                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(small_space))
-
-            if (isPortScanning.value) {
-                CircularProgressIndicator(color = CoralRed40)
-                Spacer(modifier = Modifier.height(extra_small_space))
-                Text(
-                    text = "Ports scannés: ${scannedPortsCount.value}",
-                    modifier = Modifier.align(Alignment.Start),
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = "Ports restants: ${remainingPortsCount.value}",
-                    modifier = Modifier.align(Alignment.Start),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-
-            if (device.openPorts.isNotEmpty()) {
-                Text(
-                    text = "Ports ouverts: ${device.openPorts.joinToString(", ")}",
-                    modifier = Modifier.align(Alignment.Start),
-                    style = MaterialTheme.typography.bodySmall,
-                )
+            item {
+                Spacer(modifier = Modifier.height(large_space))
             }
         }
     }
 }
 
 @Composable
-fun VulnerabilityItem(modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+fun VulnerabilityItem(
+    vuln: Vulnerability,
+    modifier: Modifier = Modifier, onClick: () -> Unit = {}
+) {
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
@@ -368,14 +422,18 @@ fun VulnerabilityItem(modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text(text = "Nom", color = Color.DarkGray)
+                    Text(text = vuln.name, color = Color.DarkGray)
                     Text(
-                        text = "More info on vulnerability",
+                        text = "Voir plus d'informations",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray
                     )
                 }
-                Icon(painterResource(id = R.drawable.ic_chevron_right), contentDescription = null, tint = CoralRed40)
+                Icon(
+                    painterResource(id = R.drawable.ic_chevron_right),
+                    contentDescription = null,
+                    tint = CoralRed40
+                )
             }
         }
     }
