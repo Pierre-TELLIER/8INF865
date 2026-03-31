@@ -144,8 +144,10 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
     }
 
     private fun getOwnMacAddress(ip: String): String? {
-        return execCommand("ifconfig | grep -B 1 ${ip} | head -n 1 | awk -F' ' '{ print \$5 }'")
-            .firstOrNull()
+        return runCatching {
+            execCommand("ifconfig | grep -B 1 ${ip} | head -n 1 | awk -F' ' '{ print \$5 }'")
+                .firstOrNull()
+        }.getOrNull()
     }
 
     private fun getWifiSSID(): String? {
