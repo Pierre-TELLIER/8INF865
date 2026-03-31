@@ -8,5 +8,6 @@ sealed class NavScreen(val route: String) {
     data object CVE : NavScreen("cve")
     data object Parametres : NavScreen("parametres")
     data object Historique : NavScreen("historique")
+    data object ScanHistory : NavScreen("scan_history")
     data object Scan : NavScreen("scan")
 }

@@ -2,6 +2,7 @@ package com.INF865.izondevices.ui.screens
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,7 +49,8 @@ import com.INF865.izondevices.ui.theme.tiny_space
 @Composable
 fun HistoriqueScreen(
     scans: List<Scan>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onScanClick: (Scan) -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -80,7 +82,8 @@ fun HistoriqueScreen(
             items(scans.reversed()) { scan ->
                 HistoryItem(
                     name = scan.scannedNetwork.networkName ?: scan.scannedNetwork.networkAddress,
-                    date = DateFormat.format("HH:mm dd/MM/yyyy", scan.date).toString()
+                    date = DateFormat.format("HH:mm dd/MM/yyyy", scan.date).toString(),
+                    onClick = { onScanClick(scan) }
                 )
             }
         }
@@ -88,12 +91,18 @@ fun HistoriqueScreen(
 }
 
 @Composable
-fun HistoryItem(modifier: Modifier = Modifier, name: String, date: String) {
+fun HistoryItem(
+    modifier: Modifier = Modifier,
+    name: String,
+    date: String,
+    onClick: () -> Unit = {}
+) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = small_medium_space),
+                .padding(vertical = small_medium_space)
+                .clickable(onClick = onClick),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {

@@ -24,6 +24,7 @@ import com.INF865.izondevices.ui.screens.DeviceInfoScreen
 import com.INF865.izondevices.ui.screens.CVEScreen
 import com.INF865.izondevices.ui.screens.ParametresScreen
 import com.INF865.izondevices.ui.screens.HistoriqueScreen
+import com.INF865.izondevices.ui.screens.ScanHistoryScreen
 import com.INF865.izondevices.ui.screens.ScanScreen
 import com.INF865.izondevices.ui.theme.*
 import androidx.core.content.edit
@@ -43,6 +44,8 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
     // Shared state for the latest scan results, persisted in SharedPreferences
     var latestScanResults by remember { mutableStateOf(loadLatestScans(context)) }
     var latestScan = latestScanResults.lastOrNull()
+    var selectedHistoryScan by remember { mutableStateOf<Scan?>(null) }
+    var deviceSourceScan by remember { mutableStateOf<Scan?>(null) }
 
     val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
     prefs.edit { putString("theme_mode", isSystemInDarkTheme().toString()) }
@@ -85,6 +88,7 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
                 MainMenuScreen(
                     scan = latestScan,
                     onDeviceClick = { device ->
+                        deviceSourceScan = latestScan
                         navController.navigate(NavScreen.DeviceInfo.createRoute(device.ipAddress))
                     },
                     onScanClick = { navController.navigate(NavScreen.Scan.route) }
@@ -92,7 +96,9 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
             }
             composable(NavScreen.DeviceInfo.route) { backStackEntry ->
                 val ip = backStackEntry.arguments?.getString("ip")
-                val device = latestScan?.scannedNetwork?.devices?.find { it.ipAddress == ip }
+                val device =
+                    deviceSourceScan?.scannedNetwork?.devices?.find { it.ipAddress == ip }
+                        ?: latestScan?.scannedNetwork?.devices?.find { it.ipAddress == ip }
                 if (device != null) {
                     DeviceInfoScreen(
                         device = device,
@@ -110,7 +116,25 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
                 ParametresScreen()
             }
             composable(NavScreen.Historique.route) {
-                HistoriqueScreen(latestScanResults)
+                HistoriqueScreen(
+                    scans = latestScanResults,
+                    onScanClick = { scan ->
+                        selectedHistoryScan = scan
+                        navController.navigate(NavScreen.ScanHistory.route)
+                    }
+                )
+            }
+            composable(NavScreen.ScanHistory.route) {
+                selectedHistoryScan?.let { scan ->
+                    ScanHistoryScreen(
+                        scan = scan,
+                        onDeviceClick = { device ->
+                            deviceSourceScan = scan
+                            navController.navigate(NavScreen.DeviceInfo.createRoute(device.ipAddress))
+                        },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
             composable(NavScreen.Scan.route) {
                 ScanScreen(
