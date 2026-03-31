@@ -25,13 +25,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.INF865.izondevices.R
+import com.INF865.izondevices.model.Vulnerability
 import com.INF865.izondevices.ui.theme.CoralRed40
 import com.INF865.izondevices.ui.theme.CoralRed80Background
 import com.INF865.izondevices.ui.theme.extra_large_space
 import com.INF865.izondevices.ui.theme.extra_small_space
 import com.INF865.izondevices.ui.theme.large_space
 import com.INF865.izondevices.ui.theme.medium_large_text
-import com.INF865.izondevices.ui.theme.medium_small_text
 import com.INF865.izondevices.ui.theme.medium_space
 import com.INF865.izondevices.ui.theme.placeholder_height
 import com.INF865.izondevices.ui.theme.small_medium_space
@@ -41,7 +41,7 @@ import com.INF865.izondevices.ui.theme.tiny_space
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CVEScreen(modifier: Modifier = Modifier, onBack: () -> Unit = {}) {
+fun CVEScreen(vuln: Vulnerability, modifier: Modifier = Modifier, onBack: () -> Unit = {}) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -59,7 +59,7 @@ fun CVEScreen(modifier: Modifier = Modifier, onBack: () -> Unit = {}) {
                 tint = CoralRed40,
             )
             Text(
-                text = stringResource(id = R.string.vulnerability_title),
+                text = vuln.name,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = medium_large_text
@@ -78,9 +78,9 @@ fun CVEScreen(modifier: Modifier = Modifier, onBack: () -> Unit = {}) {
         )
 
         Column(modifier = Modifier.padding(medium_space)) {
-            CVESection(title = stringResource(id = R.string.description_label), content = "Description de la vulnérabilité")
-            CVESection(title = stringResource(id = R.string.remediation_label), content = "Moyens de corriger la vulnérabilité")
-            CVESection(title = stringResource(id = R.string.details_label), content = "Plus d'informations sur la vulnérabilité")
+            CVESection(title = stringResource(id = R.string.description_label), content = vuln.description)
+            CVESection(title = stringResource(id = R.string.remediation_label), content = vuln.mitigation)
+            CVESection(title = stringResource(id = R.string.details_label), content = vuln.details)
         }
     }
 }

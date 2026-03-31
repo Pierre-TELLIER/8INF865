@@ -74,7 +74,7 @@ fun DeviceInfoScreen(
     device: NetworkDevice,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
-    onVulnerabilityClick: () -> Unit = {}
+    onVulnerabilityClick: (Vulnerability) -> Unit = {}
 ) {
     val context = LocalContext.current
     val pingButtonColor = remember { mutableStateOf<Color?>(null) }
@@ -139,6 +139,8 @@ fun DeviceInfoScreen(
                                 80 -> device.vulnerabilities.add(HTTP_EXPOSED)
                             }
                         }
+
+                        // TODO : save latest device state to database
                     }
                 }
             }
@@ -404,10 +406,10 @@ fun DeviceInfoScreen(
 @Composable
 fun VulnerabilityItem(
     vuln: Vulnerability,
-    modifier: Modifier = Modifier, onClick: () -> Unit = {}
+    modifier: Modifier = Modifier, onClick: (Vulnerability) -> Unit = {}
 ) {
     Card(
-        onClick = onClick,
+        onClick = { onClick(vuln) },
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(elevation_none),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)

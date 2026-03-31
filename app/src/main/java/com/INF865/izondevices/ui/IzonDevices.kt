@@ -31,8 +31,8 @@ import androidx.core.content.edit
 import com.INF865.izondevices.R
 import com.INF865.izondevices.model.Network
 import com.INF865.izondevices.model.Scan
+import com.INF865.izondevices.model.Vulnerability
 import kotlinx.serialization.json.Json
-import java.util.Date
 
 @Composable
 fun IzonDevicesApp(modifier: Modifier = Modifier) {
@@ -46,6 +46,7 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
     var latestScan = latestScanResults.lastOrNull()
     var selectedHistoryScan by remember { mutableStateOf<Scan?>(null) }
     var deviceSourceScan by remember { mutableStateOf<Scan?>(null) }
+    var selectedVulnerability by remember { mutableStateOf<Vulnerability?>(null) }
 
     val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
     prefs.edit { putString("theme_mode", isSystemInDarkTheme().toString()) }
@@ -56,7 +57,7 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
         bottomBar = {
             if (currentRoute == NavScreen.MainMenu.route ||
                 currentRoute?.startsWith("device_info") == true ||
-                currentRoute == NavScreen.CVE.route ||
+                currentRoute?.startsWith("cve") == true ||
                 currentRoute == NavScreen.Parametres.route ||
                 currentRoute == NavScreen.Historique.route
             ) {
@@ -103,14 +104,20 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
                     DeviceInfoScreen(
                         device = device,
                         onBack = { navController.popBackStack() },
-                        onVulnerabilityClick = { navController.navigate(NavScreen.CVE.route) }
+                        onVulnerabilityClick = { vuln ->
+                            selectedVulnerability = vuln
+                            navController.navigate(NavScreen.CVE.route)
+                        }
                     )
                 }
             }
             composable(NavScreen.CVE.route) {
-                CVEScreen(
-                    onBack = { navController.popBackStack() }
-                )
+                selectedVulnerability?.let { vuln ->
+                    CVEScreen(
+                        vuln = vuln,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
             composable(NavScreen.Parametres.route) {
                 ParametresScreen()
@@ -272,7 +279,15 @@ fun MainMenuPreview() {
 @Composable
 fun CVEPreview() {
     IzondevicesTheme {
-        CVEScreen()
+        CVEScreen(
+            vuln = Vulnerability(
+                id = "CVE-2024-0001",
+                name = "Sample CVE",
+                description = "Sample description",
+                mitigation = "Sample mitigation",
+                details = "Sample details"
+            )
+        )
     }
 }
 
