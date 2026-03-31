@@ -5,12 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.LinkAddress
-import android.net.NetworkCapabilities
-import android.net.NetworkRequest
-import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
 import com.INF865.izondevices.R
 import com.INF865.izondevices.model.Network
@@ -151,34 +147,10 @@ class LocalNetworkScanner(private val context: Context) : Closeable {
     }
 
     private fun getWifiSSID(): String? {
-        val connectivityManager =
-            context.getSystemService(ConnectivityManager::class.java)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val request = NetworkRequest.Builder()
-                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                .build()
-
-            val futureSSID = CompletableFuture<String>()
-            val networkCallback =
-                object : ConnectivityManager.NetworkCallback(FLAG_INCLUDE_LOCATION_INFO) {
-                    fun onCapabilitiesChanged(
-                        unused: Network,
-                        networkCapabilities: NetworkCapabilities
-                    ) {
-                        val wifiInfo = networkCapabilities.transportInfo as WifiInfo
-                        futureSSID.complete(wifiInfo.ssid.replace("\"", ""))
-                        connectivityManager.unregisterNetworkCallback(this)
-                    }
-                };
-            connectivityManager.requestNetwork(request, networkCallback);
-            connectivityManager.registerNetworkCallback(request, networkCallback);
-
-            return futureSSID.get()
-        } else {
-            val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            return wifiManager.connectionInfo?.ssid
-        }
+        return runCatching {
+                val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
+                return wifiManager.connectionInfo?.ssid
+        }.getOrNull()
     }
 
     private fun getActiveSubnetInfo(): SubnetInfo? {
