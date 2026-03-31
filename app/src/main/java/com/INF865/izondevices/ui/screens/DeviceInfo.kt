@@ -111,6 +111,7 @@ fun DeviceInfoScreen(
         }
     }
 
+    // TODO : sometimes all ports are not detected ?
     val startPortScan = { ports: List<Int> ->
         val service = portScanService.value
         if (service != null && !isPortScanning.value) {
@@ -133,6 +134,7 @@ fun DeviceInfoScreen(
                         scannedPortsCount.value = ports.size + 1
                         remainingPortsCount.value = 0
 
+                        // TODO : check if not already in list
                         for (port in device.openPorts) {
                             when (port) {
                                 23 -> device.vulnerabilities.add(TELNET_EXPOSED)
