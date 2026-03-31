@@ -12,10 +12,9 @@ data class PortScanProgress(
     val remainingCount: Int
 )
 
-const val FIRST_PORT = 1
-const val LAST_PORT = 65535
-const val TOTAL_PORTS = LAST_PORT - FIRST_PORT + 1
 const val PROGRESS_STEP = 100
+val BRUTE_PORTS = 1..65535
+val FUZZY_PORTS = listOf(21, 22, 23, 25, 53, 80, 110, 143, 443, 445, 3360, 3389)
 
 suspend fun scanPortDevice(device: NetworkDevice): Sequence<Int> {
     return withContext(Dispatchers.IO) {
@@ -25,24 +24,27 @@ suspend fun scanPortDevice(device: NetworkDevice): Sequence<Int> {
 
 suspend fun scanPortDeviceProgressive(
     device: NetworkDevice,
+    ports: List<Int>,
     onProgress: (PortScanProgress) -> Unit
 ): List<Int> {
     return withContext(Dispatchers.IO) {
         val openPorts = mutableListOf<Int>()
 
-        for (port in FIRST_PORT..LAST_PORT) {
+        var count = 0
+        val lastPort = ports.lastOrNull() ?: 0
+        for (port in ports) {
             if (isPortOpen(device.ipAddress, port, PING_TIMEOUT_MS)) {
                 openPorts.add(port)
             }
 
-            val scannedCount = port - FIRST_PORT + 1
-            val shouldEmit = scannedCount % PROGRESS_STEP == 0 || port == LAST_PORT || openPorts.lastOrNull() == port
+            count++
+            val shouldEmit = count % PROGRESS_STEP == 0 || port == lastPort || openPorts.lastOrNull() == port
             if (shouldEmit) {
                 onProgress(
                     PortScanProgress(
                         openPorts = openPorts.toList(),
-                        scannedCount = scannedCount,
-                        remainingCount = TOTAL_PORTS - scannedCount
+                        scannedCount = count,
+                        remainingCount = ports.size - count
                     )
                 )
             }
@@ -53,7 +55,7 @@ suspend fun scanPortDeviceProgressive(
 }
 
 private fun scanAllPorts(device: NetworkDevice): Sequence<Int> = sequence {
-    for (port in FIRST_PORT..LAST_PORT) {
+    for (port in BRUTE_PORTS) {
         if (isPortOpen(device.ipAddress, port, PING_TIMEOUT_MS)) {
             yield(port)
         }

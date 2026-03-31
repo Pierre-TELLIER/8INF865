@@ -9,4 +9,5 @@ data class NetworkDevice(
     val hostName: String? = null,
     var constructor: String? = null,
     var model: String? = null,
+    var openPorts: List<Int> = emptyList(),
 )

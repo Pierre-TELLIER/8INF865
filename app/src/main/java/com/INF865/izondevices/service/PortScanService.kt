@@ -42,12 +42,13 @@ class PortScanService : Service() {
 
     fun scanPortsProgressive(
         device: NetworkDevice,
+        ports: List<Int>,
         onProgress: (PortScanProgress) -> Unit
     ): CompletableFuture<List<Int>> {
         return CompletableFuture.supplyAsync(
             {
                 runBlocking {
-                    scanPortDeviceProgressive(device) { progress ->
+                    scanPortDeviceProgressive(device, ports) { progress ->
                         mainHandler.post { onProgress(progress) }
                     }
                 }

@@ -29,6 +29,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -41,6 +44,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,9 +56,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.INF865.izondevices.R
 import com.INF865.izondevices.model.NetworkDevice
-import com.INF865.izondevices.scanner.FIRST_PORT
+import com.INF865.izondevices.scanner.BRUTE_PORTS
+import com.INF865.izondevices.scanner.FUZZY_PORTS
 import com.INF865.izondevices.scanner.INVALID_MAC
-import com.INF865.izondevices.scanner.LAST_PORT
 import com.INF865.izondevices.scanner.pingDevice
 import com.INF865.izondevices.scanner.PortScanProgress
 import com.INF865.izondevices.service.PortScanService
@@ -72,13 +76,13 @@ fun DeviceInfoScreen(
 ) {
     val context = LocalContext.current
     val pingButtonColor = remember { mutableStateOf<Color?>(null) }
-    val openPorts = remember { mutableStateOf<List<Int>>(emptyList()) }
     val isPortScanning = remember { mutableStateOf(false) }
     val scannedPortsCount = remember { mutableStateOf(0) }
     val remainingPortsCount = remember { mutableStateOf(0) }
     val portScanService = remember { mutableStateOf<PortScanService?>(null) }
     val activePortScan = remember { mutableStateOf<CompletableFuture<List<Int>>?>(null) }
     val coroutineScope = rememberCoroutineScope()
+    val showPortMenu = remember { mutableStateOf(false) }
 
     DisposableEffect(context) {
         var isBound = false
@@ -101,6 +105,33 @@ fun DeviceInfoScreen(
             activePortScan.value?.cancel(true)
             if (isBound) {
                 runCatching { context.unbindService(connection) }
+            }
+        }
+    }
+
+    val startPortScan = { ports: List<Int> ->
+        val service = portScanService.value
+        if (service != null && !isPortScanning.value) {
+            isPortScanning.value = true
+            device.openPorts = emptyList()
+            scannedPortsCount.value = 0
+            remainingPortsCount.value = ports.size + 1
+
+            val future = service.scanPortsProgressive(device, ports) { progress: PortScanProgress ->
+                device.openPorts = progress.openPorts
+                scannedPortsCount.value = progress.scannedCount
+                remainingPortsCount.value = progress.remainingCount
+            }
+            activePortScan.value = future
+            future.whenComplete { result, throwable ->
+                Handler(Looper.getMainLooper()).post {
+                    isPortScanning.value = false
+                    if (throwable == null && !future.isCancelled) {
+                        device.openPorts = result ?: emptyList()
+                        scannedPortsCount.value = ports.size + 1
+                        remainingPortsCount.value = 0
+                    }
+                }
             }
         }
     }
@@ -260,35 +291,35 @@ fun DeviceInfoScreen(
                     },
                     backgroundColor = pingButtonColor.value ?: CoralRed80Background
                 )
-                ActionButton(
-                    text = stringResource(id = R.string.port_scan_label),
-                    onClick = {
-                        val service = portScanService.value ?: return@ActionButton
-                        if (isPortScanning.value) return@ActionButton
-
-                        isPortScanning.value = true
-                        openPorts.value = emptyList()
-                        scannedPortsCount.value = 0
-                        remainingPortsCount.value = LAST_PORT - FIRST_PORT + 1
-
-                        val future = service.scanPortsProgressive(device) { progress: PortScanProgress ->
-                            openPorts.value = progress.openPorts
-                            scannedPortsCount.value = progress.scannedCount
-                            remainingPortsCount.value = progress.remainingCount
-                        }
-                        activePortScan.value = future
-                        future.whenComplete { result, throwable ->
-                            Handler(Looper.getMainLooper()).post {
-                                isPortScanning.value = false
-                                if (throwable == null && !future.isCancelled) {
-                                    openPorts.value = result ?: emptyList()
-                                    scannedPortsCount.value = LAST_PORT - FIRST_PORT + 1
-                                    remainingPortsCount.value = 0
-                                }
+                Box {
+                    ActionButton(
+                        text = stringResource(id = R.string.port_scan_label),
+                        onClick = {
+                            if (!isPortScanning.value) {
+                                showPortMenu.value = true
                             }
                         }
+                    )
+                    DropdownMenu(
+                        expanded = showPortMenu.value,
+                        onDismissRequest = { showPortMenu.value = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Fuzzy ports") },
+                            onClick = {
+                                showPortMenu.value = false
+                                startPortScan(FUZZY_PORTS)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Brute ports") },
+                            onClick = {
+                                showPortMenu.value = false
+                                startPortScan(BRUTE_PORTS.toList())
+                            }
+                        )
                     }
-                )
+                }
             }
 
             Spacer(modifier = Modifier.height(small_space))
@@ -308,9 +339,9 @@ fun DeviceInfoScreen(
                 )
             }
 
-            if (openPorts.value.isNotEmpty()) {
+            if (device.openPorts.isNotEmpty()) {
                 Text(
-                    text = "Ports ouverts: ${openPorts.value.joinToString(", ")}",
+                    text = "Ports ouverts: ${device.openPorts.joinToString(", ")}",
                     modifier = Modifier.align(Alignment.Start),
                     style = MaterialTheme.typography.bodySmall,
                 )
