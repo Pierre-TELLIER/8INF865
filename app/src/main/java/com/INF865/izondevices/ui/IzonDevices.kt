@@ -281,7 +281,6 @@ fun CVEPreview() {
     IzondevicesTheme {
         CVEScreen(
             vuln = Vulnerability(
-                id = "CVE-2024-0001",
                 name = "Sample CVE",
                 description = "Sample description",
                 mitigation = "Sample mitigation",
