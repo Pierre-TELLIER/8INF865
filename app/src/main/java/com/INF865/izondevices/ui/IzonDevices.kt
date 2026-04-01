@@ -5,44 +5,87 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.edit
+import androidx.datastore.core.DataStore
+import androidx.datastore.dataStore
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.INF865.izondevices.model.NetworkDevice
-import com.INF865.izondevices.ui.screens.MainMenuScreen
-import com.INF865.izondevices.ui.screens.DeviceInfoScreen
-import com.INF865.izondevices.ui.screens.CVEScreen
-import com.INF865.izondevices.ui.screens.ParametresScreen
-import com.INF865.izondevices.ui.screens.HistoriqueScreen
-import com.INF865.izondevices.ui.screens.ScanHistoryScreen
-import com.INF865.izondevices.ui.screens.ScanScreen
-import com.INF865.izondevices.ui.theme.*
-import androidx.core.content.edit
 import com.INF865.izondevices.R
 import com.INF865.izondevices.model.Network
+import com.INF865.izondevices.model.NetworkDevice
 import com.INF865.izondevices.model.Scan
+import com.INF865.izondevices.model.ScanHistory
 import com.INF865.izondevices.model.Vulnerability
+import com.INF865.izondevices.model.serialization.ScanHistorySerializer
+import com.INF865.izondevices.ui.screens.CVEScreen
+import com.INF865.izondevices.ui.screens.DeviceInfoScreen
+import com.INF865.izondevices.ui.screens.HistoriqueScreen
+import com.INF865.izondevices.ui.screens.MainMenuScreen
+import com.INF865.izondevices.ui.screens.ParametresScreen
+import com.INF865.izondevices.ui.screens.ScanHistoryScreen
+import com.INF865.izondevices.ui.screens.ScanScreen
+import com.INF865.izondevices.ui.theme.CoralRed40
+import com.INF865.izondevices.ui.theme.CoralRedAppBackground
+import com.INF865.izondevices.ui.theme.CoralRedSelectedBackground
+import com.INF865.izondevices.ui.theme.GreyBarBackground
+import com.INF865.izondevices.ui.theme.IzondevicesTheme
+import com.INF865.izondevices.ui.theme.border_thickness
+import com.INF865.izondevices.ui.theme.elevation_none
+import com.INF865.izondevices.ui.theme.huge_space
+import com.INF865.izondevices.ui.theme.icon_size_large
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+
+
+val Context.dataStore: DataStore<ScanHistory> by dataStore(
+    fileName = "ScanHistory.json",
+    serializer = ScanHistorySerializer,
+)
+
 
 @Composable
 fun IzonDevicesApp(modifier: Modifier = Modifier) {
+    val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    var latestScanResults by remember { mutableStateOf(mutableListOf<Scan>()) }
+
     // Shared state for the latest scan results, persisted in SharedPreferences
-    var latestScanResults by remember { mutableStateOf(loadLatestScans(context)) }
+    coroutineScope.launch {
+        loadLatestScansV2(context).collect({ value ->
+            latestScanResults = value
+        })
+    }
+
+
     var latestScan = latestScanResults.lastOrNull()
     var selectedHistoryScan by remember { mutableStateOf<Scan?>(null) }
     var deviceSourceScan by remember { mutableStateOf<Scan?>(null) }
@@ -148,7 +191,13 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
                     onCancel = { navController.popBackStack() },
                     onScanFinished = { scan ->
                         latestScanResults += scan
-                        saveLatestScans(context, latestScanResults)
+                        //saveLatestScans(context, latestScanResults)
+                        coroutineScope.launch {
+                            saveLatestScansV2(
+                                context,
+                                latestScanResults
+                            )
+                        }
                         navController.popBackStack()
                     }
                 )
@@ -231,13 +280,23 @@ fun BottomNavIcon(modifier: Modifier = Modifier, menu: String) {
     }
 }
 
+
 // awful way to save the latest scan result...
 // but cheap and easy
 private fun saveLatestScans(context: Context, scan: List<Scan>) {
+
     val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
     val data = Json.encodeToString(scan)
     prefs.edit { putString("latest_scan", data) }
 }
+
+
+suspend fun saveLatestScansV2(context: Context, scans: List<Scan>): Unit {
+    context.dataStore.updateData { scanHistory ->
+        ScanHistory(scans.toMutableList())
+    }
+}
+
 
 private fun loadLatestScans(context: Context): MutableList<Scan> {
     val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
@@ -247,6 +306,13 @@ private fun loadLatestScans(context: Context): MutableList<Scan> {
         Json.decodeFromString<MutableList<Scan>>(data)
     }.getOrDefault(invalid_scan)
 }
+
+fun loadLatestScansV2(context: Context): Flow<MutableList<Scan>> {
+    return context.dataStore.data.map { scanHistory ->
+        scanHistory.scans
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
