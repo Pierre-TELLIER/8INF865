@@ -22,11 +22,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -84,38 +86,63 @@ fun ScanScreen(
             Manifest.permission.ACCESS_FINE_LOCATION,
         )
     }
-    var isScanning by remember { mutableStateOf(!isPreview) }
+    
+    var isScanning by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var scan by remember { mutableStateOf<Scan?>(null) }
-    var permissionsGranted by remember {
-        mutableStateOf(hasRequiredPermissions(context, requiredPermissions))
-    }
+    var showPermissionDialog by remember { mutableStateOf(false) }
+    
     val activeScan = remember { mutableStateOf<CompletableFuture<Network?>?>(null) }
 
-    // check if permissions have been given
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { grantResults ->
-        permissionsGranted = requiredPermissions.all { permission ->
-            grantResults[permission] == true ||
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        permission
-                    ) == PackageManager.PERMISSION_GRANTED
+        val allGranted = requiredPermissions.all { 
+            grantResults[it] == true || ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
-        if (!permissionsGranted) {
-            isScanning = false
-            errorMessage = "Internet and network state permissions are required"
+        if (allGranted) {
+            isScanning = true
+        } else {
+            showPermissionDialog = true
         }
     }
 
-    LaunchedEffect(isPreview, permissionsGranted) {
-        if (!isPreview && !permissionsGranted) {
-            permissionLauncher.launch(requiredPermissions)
+    // Trigger permission check on entry
+    LaunchedEffect(Unit) {
+        if (!isPreview) {
+            if (hasRequiredPermissions(context, requiredPermissions)) {
+                isScanning = true
+            } else {
+                permissionLauncher.launch(requiredPermissions)
+            }
         }
     }
 
-    DisposableEffect(context, isPreview, permissionsGranted) {
+    if (showPermissionDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionDialog = false; onCancel() },
+            title = { Text(stringResource(R.string.permission_error_title)) },
+            text = { Text(stringResource(R.string.permission_error_message)) },
+            confirmButton = {
+                TextButton(onClick = { 
+                    showPermissionDialog = false
+                    permissionLauncher.launch(requiredPermissions)
+                }) {
+                    Text(stringResource(R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showPermissionDialog = false
+                    onCancel()
+                }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    DisposableEffect(context, isPreview, isScanning) {
         if (isPreview) {
             scan = Scan.fromNow(
                 Network(
@@ -133,10 +160,8 @@ fun ScanScreen(
                     )
                 )
             )
-            isScanning = false
             onDispose { }
-        } else if (!permissionsGranted) {
-            isScanning = false
+        } else if (!isScanning) {
             onDispose { }
         } else {
             var isBound = false
@@ -144,7 +169,6 @@ fun ScanScreen(
                 override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
                     val binder = service as? NetworkScanService.LocalBinder ?: return
                     val networkService = binder.getService()
-                    isScanning = true
                     errorMessage = null
 
                     val future = networkService.scanNetwork()
@@ -194,7 +218,7 @@ fun ScanScreen(
             shape = RoundedCornerShape(extra_small_space)
         ) {
             Text(
-                text = if (isScanning) stringResource(id = R.string.scan_in_progress) else "Scan complété",
+                text = if (isScanning) stringResource(id = R.string.scan_in_progress) else stringResource(R.string.scan_completed),
                 color = Color.White,
                 modifier = Modifier.padding(
                     horizontal = large_space,

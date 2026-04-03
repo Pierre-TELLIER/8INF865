@@ -22,7 +22,10 @@
     <string name="network_title">Réseau 1</string>
     <string name="reseau_label">Réseau</string>
     <string name="root_warning_title">Avertissement Root</string>
-    <string name="root_warning_message">Certaines fonctionnalités comme la détection des adresses MAC et l\'identification du constructeur sont impossibles sans un téléphone rooté.</string>
+    <string name="root_warning_message">Certaines fonctionnalités (détection des adresses MAC et l\'identification du constructeur) sont impossibles sans un téléphone rooté.</string>
     <string name="ok">OK</string>
     <string name="mac_warning_setting">Avertissement détection des adresses MAC</string>
+    <string name="permission_error_title">Erreur de permissions</string>
+    <string name="permission_error_message">La permission de localisation est requise pour scanner le réseau Wifi. Veuillez mettre à jour les permissions dans les paramètres de l\'application.</string>
+    <string name="scan_completed">Scan complété</string>
 </resources>
