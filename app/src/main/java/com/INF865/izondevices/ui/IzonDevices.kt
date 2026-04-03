@@ -10,12 +10,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.edit
 import androidx.datastore.core.DataStore
@@ -79,7 +84,7 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
     var latestScanResults by remember { mutableStateOf(mutableListOf<Scan>()) }
 
     // Shared state for the latest scan results, persisted in SharedPreferences
-    coroutineScope.launch {
+    LaunchedEffect(Unit) {
         loadLatestScansV2(context).collect({ value ->
             latestScanResults = value
         })
@@ -91,8 +96,40 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
     var deviceSourceScan by remember { mutableStateOf<Scan?>(null) }
     var selectedVulnerability by remember { mutableStateOf<Vulnerability?>(null) }
 
-    val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
-    prefs.edit { putString("theme_mode", isSystemInDarkTheme().toString()) }
+    val prefs = remember { context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE) }
+    
+    val isDark = isSystemInDarkTheme()
+    LaunchedEffect(isDark) {
+        prefs.edit { putString("theme_mode", isDark.toString()) }
+    }
+
+    var showRootWarning by remember { mutableStateOf(false) }
+    
+    // Check for first run using LaunchedEffect to ensure it runs only once and correctly updates state
+    LaunchedEffect(Unit) {
+        if (prefs.getBoolean("is_first_run", true)) {
+            showRootWarning = true
+        }
+    }
+
+    if (showRootWarning) {
+        AlertDialog(
+            onDismissRequest = { 
+                showRootWarning = false 
+                prefs.edit { putBoolean("is_first_run", false) }
+            },
+            title = { Text(stringResource(R.string.root_warning_title)) },
+            text = { Text(stringResource(R.string.root_warning_message)) },
+            confirmButton = {
+                TextButton(onClick = { 
+                    showRootWarning = false 
+                    prefs.edit { putBoolean("is_first_run", false) }
+                }) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -163,7 +200,7 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
                 }
             }
             composable(NavScreen.Parametres.route) {
-                ParametresScreen()
+                ParametresScreen(onShowRootWarning = { showRootWarning = true })
             }
             composable(NavScreen.Historique.route) {
                 HistoriqueScreen(

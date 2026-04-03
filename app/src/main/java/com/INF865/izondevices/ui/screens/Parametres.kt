@@ -2,6 +2,7 @@ package com.INF865.izondevices.ui.screens
 
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,7 +59,7 @@ import com.INF865.izondevices.ui.theme.tiny_space
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ParametresScreen(modifier: Modifier = Modifier) {
+fun ParametresScreen(modifier: Modifier = Modifier, onShowRootWarning: () -> Unit = {}) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -87,7 +88,8 @@ fun ParametresScreen(modifier: Modifier = Modifier) {
 
         LazyColumn(modifier = Modifier.padding(medium_space)) {
             items(7) { index ->
-                when (index + 1) {
+                val displayIndex = index + 1
+                when (displayIndex) {
                     1, 2 -> {
                         ParametreItem(name = "Paramètre $index", type = "edit")
                     }
@@ -96,7 +98,15 @@ fun ParametresScreen(modifier: Modifier = Modifier) {
                         ParametreItem(name = "Mode sombre", type = "switch")
                     }
 
-                    4, 5, 6 -> {
+                    4 -> {
+                        ParametreItem(
+                            name = stringResource(R.string.mac_warning_setting),
+                            type = "basic",
+                            onClick = onShowRootWarning
+                        )
+                    }
+
+                    5, 6 -> {
                         ParametreItem(name = "Paramètre $index", type = "basic")
                     }
 
@@ -110,15 +120,20 @@ fun ParametresScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ParametreItem(modifier: Modifier = Modifier, name: String, type: String = "basic") {
+fun ParametreItem(
+    modifier: Modifier = Modifier,
+    name: String,
+    type: String = "basic",
+    onClick: () -> Unit = {}
+) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("izon_prefs", Context.MODE_PRIVATE)
     val isDarkStr = prefs.getString("theme_mode", null)
     val isDark = if (isDarkStr == "true") true else false
     var checked by remember { mutableStateOf(isDark) }
-    val onChecked: (checked: Boolean) -> Unit  = { prefs.edit { putString("theme_mode", checked.toString()) } }
+    val onChecked: (checked: Boolean) -> Unit  = { prefs.edit { putString("theme_mode", it.toString()) } }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize().clickable { onClick() }) {
         Row(
             modifier = modifier
                 .fillMaxWidth()
