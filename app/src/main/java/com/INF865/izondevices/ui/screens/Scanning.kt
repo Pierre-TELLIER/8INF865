@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -170,6 +171,13 @@ fun ScanScreen(
                     val binder = service as? NetworkScanService.LocalBinder ?: return
                     val networkService = binder.getService()
                     errorMessage = null
+
+                    // check if phone location is enabled or not
+                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+                    if (!locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)) {
+                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        context.startActivity(intent);
+                    }
 
                     val future = networkService.scanNetwork()
                     activeScan.value = future
