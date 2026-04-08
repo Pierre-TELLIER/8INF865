@@ -1,7 +1,7 @@
 package com.INF865.izondevices.scanner
 
 const val PING_TIMEOUT_MS = 10
-const val PROBE_TIMEOUT_MS = 250
+const val PROBE_TIMEOUT_MS = 1000
 const val PROBE_THREADS = 32
 const val DEFAULT_PREFIX_LENGTH = 24
 const val MAX_HOSTS = 512
