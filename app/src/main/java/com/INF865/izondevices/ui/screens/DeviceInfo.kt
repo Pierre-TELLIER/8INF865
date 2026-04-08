@@ -58,8 +58,8 @@ import com.INF865.izondevices.model.NetworkDevice
 import com.INF865.izondevices.model.Vulnerability
 import com.INF865.izondevices.model.values.HTTP_EXPOSED
 import com.INF865.izondevices.model.values.TELNET_EXPOSED
-import com.INF865.izondevices.scanner.BRUTE_PORTS
-import com.INF865.izondevices.scanner.FUZZY_PORTS
+import com.INF865.izondevices.scanner.ALL_PORTS
+import com.INF865.izondevices.scanner.QUICK_PORTS
 import com.INF865.izondevices.scanner.INVALID_MAC
 import com.INF865.izondevices.scanner.pingDevice
 import com.INF865.izondevices.scanner.PortScanProgress
@@ -349,17 +349,17 @@ fun DeviceInfoScreen(
                             onDismissRequest = { showPortMenu.value = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Fuzzy ports") },
+                                text = { Text("Rapide") },
                                 onClick = {
                                     showPortMenu.value = false
-                                    startPortScan(FUZZY_PORTS)
+                                    startPortScan(QUICK_PORTS)
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Brute ports") },
+                                text = { Text("Complet") },
                                 onClick = {
                                     showPortMenu.value = false
-                                    startPortScan(BRUTE_PORTS.toList())
+                                    startPortScan(ALL_PORTS.toList())
                                 }
                             )
                         }

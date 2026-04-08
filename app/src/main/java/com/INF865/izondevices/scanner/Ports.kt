@@ -13,8 +13,8 @@ data class PortScanProgress(
 )
 
 const val PROGRESS_STEP = 100
-val BRUTE_PORTS = 1..65535
-val FUZZY_PORTS = listOf(21, 22, 23, 25, 53, 80, 110, 143, 443, 445, 3360, 3389)
+val ALL_PORTS = 1..65535
+val QUICK_PORTS = listOf(21, 22, 23, 25, 53, 80, 110, 143, 443, 445, 3360, 3389)
 
 suspend fun scanPortDevice(device: NetworkDevice): Sequence<Int> {
     return withContext(Dispatchers.IO) {
@@ -55,7 +55,7 @@ suspend fun scanPortDeviceProgressive(
 }
 
 private fun scanAllPorts(device: NetworkDevice): Sequence<Int> = sequence {
-    for (port in BRUTE_PORTS) {
+    for (port in ALL_PORTS) {
         if (isPortOpen(device.ipAddress, port, PING_TIMEOUT_MS)) {
             yield(port)
         }
