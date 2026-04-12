@@ -1,5 +1,6 @@
 package com.INF865.izondevices.ui.screens
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -55,8 +56,10 @@ import com.INF865.izondevices.ui.theme.large_text
 import com.INF865.izondevices.ui.theme.medium_large_text
 import com.INF865.izondevices.ui.theme.medium_small_text
 import com.INF865.izondevices.ui.theme.medium_space
+import com.INF865.izondevices.ui.theme.medium_text
 import com.INF865.izondevices.ui.theme.small_medium_space
 import com.INF865.izondevices.ui.theme.small_space
+import com.INF865.izondevices.ui.theme.small_text
 import com.INF865.izondevices.ui.theme.tiny_space
 
 @Composable
@@ -93,7 +96,7 @@ fun MainMenuScreen(
         } else {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = " " + stringResource(id = R.string.reseau_label) + " " + (scan.scannedNetwork.networkName?: ""), // TODO : récupérer le nom du réseau scanné
+                    text = " " + stringResource(id = R.string.reseau_label) + " " + (scan.scannedNetwork.networkName?: ""),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = medium_large_text
@@ -109,9 +112,18 @@ fun MainMenuScreen(
                         .align(Alignment.CenterHorizontally)
                         .background(CoralRed40)
                 )
+                Spacer(modifier = Modifier.height(tiny_space))
+                Text(
+                    text = DateFormat.format("dd/MM/yyyy, HH:mm", scan.date).toString(),
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = small_text
+                    ),
+                    textAlign = TextAlign.Center,
+                    color = Color.Black
+                )
             }
 
-            Spacer(modifier = Modifier.height(huge_space))
+            Spacer(modifier = Modifier.height(medium_space))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier.weight(1f),
@@ -125,10 +137,10 @@ fun MainMenuScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(medium_space))
+        Spacer(modifier = Modifier.height(small_medium_space))
 
         Column(modifier = Modifier.fillMaxWidth()) {
-            Spacer(modifier = Modifier.height(large_space))
+            Spacer(modifier = Modifier.height(medium_space))
 
             Button(
                 onClick = onScanClick,
@@ -148,7 +160,7 @@ fun MainMenuScreen(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(large_space))
+        Spacer(modifier = Modifier.height(medium_space))
     }
 }
 
@@ -163,7 +175,7 @@ fun DeviceItem(
             .aspectRatio(1f)
             .border(border_thickness, CoralRedDark, shape = RoundedCornerShape(extra_small_space))
             .clickable(onClick = onClick)
-            .padding(medium_space),
+            .padding(small_medium_space),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {

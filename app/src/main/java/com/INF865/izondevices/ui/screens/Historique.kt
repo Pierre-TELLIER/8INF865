@@ -1,8 +1,10 @@
 package com.INF865.izondevices.ui.screens
 
 import android.text.format.DateFormat
+import android.widget.Space
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -33,6 +36,7 @@ import com.INF865.izondevices.R
 import com.INF865.izondevices.model.Scan
 import com.INF865.izondevices.ui.theme.CoralRed40
 import com.INF865.izondevices.ui.theme.CoralRed80Background
+import com.INF865.izondevices.ui.theme.elevation_none
 import com.INF865.izondevices.ui.theme.extra_large_space
 import com.INF865.izondevices.ui.theme.extra_small_space
 import com.INF865.izondevices.ui.theme.extra_small_text
@@ -41,6 +45,7 @@ import com.INF865.izondevices.ui.theme.large_space
 import com.INF865.izondevices.ui.theme.medium_large_text
 import com.INF865.izondevices.ui.theme.medium_small_text
 import com.INF865.izondevices.ui.theme.medium_space
+import com.INF865.izondevices.ui.theme.medium_text
 import com.INF865.izondevices.ui.theme.small_medium_space
 import com.INF865.izondevices.ui.theme.tiny_space
 
@@ -78,11 +83,23 @@ fun HistoriqueScreen(
             )
         }
 
-        LazyColumn(modifier = Modifier.padding(medium_space)) {
+        Spacer(modifier = modifier.height(small_medium_space))
+
+        Row(
+            modifier = modifier
+                .fillMaxWidth(1.0f)
+                .padding(start = medium_space),
+            horizontalArrangement = Arrangement.Start) {
+            Text(stringResource(id = R.string.reseau_label), fontSize = medium_small_text, fontWeight = FontWeight.SemiBold)
+            Spacer(modifier = modifier.width(extra_large_space))
+            Text(stringResource(id = R.string.history_scans_date), fontSize = medium_small_text, fontWeight = FontWeight.SemiBold)
+        }
+
+        LazyColumn(modifier = Modifier.padding(start = medium_space, end = medium_space, bottom = medium_space)) {
             items(scans.reversed()) { scan ->
                 HistoryItem(
                     name = scan.scannedNetwork.networkName ?: scan.scannedNetwork.networkAddress,
-                    date = DateFormat.format("HH:mm dd/MM/yyyy", scan.date).toString(),
+                    date = DateFormat.format("dd/MM/yyyy, HH:mm", scan.date).toString(),
                     onClick = { onScanClick(scan) }
                 )
             }
