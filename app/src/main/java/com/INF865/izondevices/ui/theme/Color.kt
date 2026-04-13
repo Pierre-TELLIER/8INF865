@@ -26,3 +26,4 @@ val GreyBarBackground = Color(0x122B2B2B)
 
 val RedVulnerabilities = Color(0xFFCC0202)
 val GreenVulnerabilities = Color(0XFF02C772)
+val GreyVulnerabilities = Color(0xFF505050)

@@ -29,7 +29,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,12 +58,31 @@ import com.INF865.izondevices.model.Vulnerability
 import com.INF865.izondevices.model.values.HTTP_EXPOSED
 import com.INF865.izondevices.model.values.TELNET_EXPOSED
 import com.INF865.izondevices.scanner.ALL_PORTS
-import com.INF865.izondevices.scanner.QUICK_PORTS
 import com.INF865.izondevices.scanner.INVALID_MAC
-import com.INF865.izondevices.scanner.pingDevice
 import com.INF865.izondevices.scanner.PortScanProgress
+import com.INF865.izondevices.scanner.QUICK_PORTS
+import com.INF865.izondevices.scanner.pingDevice
 import com.INF865.izondevices.service.PortScanService
-import com.INF865.izondevices.ui.theme.*
+import com.INF865.izondevices.ui.theme.CoralRed40
+import com.INF865.izondevices.ui.theme.CoralRed80Background
+import com.INF865.izondevices.ui.theme.CoralRedLight
+import com.INF865.izondevices.ui.theme.GreenVulnerabilities
+import com.INF865.izondevices.ui.theme.GreyVulnerabilities
+import com.INF865.izondevices.ui.theme.RedVulnerabilities
+import com.INF865.izondevices.ui.theme.bar_width_giant
+import com.INF865.izondevices.ui.theme.border_thickness
+import com.INF865.izondevices.ui.theme.elevation_none
+import com.INF865.izondevices.ui.theme.extra_large_space
+import com.INF865.izondevices.ui.theme.extra_small_space
+import com.INF865.izondevices.ui.theme.huge_space
+import com.INF865.izondevices.ui.theme.icon_size_small
+import com.INF865.izondevices.ui.theme.large_space
+import com.INF865.izondevices.ui.theme.medium_large_text
+import com.INF865.izondevices.ui.theme.medium_space
+import com.INF865.izondevices.ui.theme.mega_space
+import com.INF865.izondevices.ui.theme.small_medium_space
+import com.INF865.izondevices.ui.theme.small_space
+import com.INF865.izondevices.ui.theme.tiny_space
 import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
 
@@ -142,6 +160,8 @@ fun DeviceInfoScreen(
                             }
                         }
 
+                        device.hasBeenScanned = true
+
                         // TODO : save latest device state to database
                     }
                 }
@@ -195,7 +215,7 @@ fun DeviceInfoScreen(
         ) {
             item {
                 Surface(
-                    color = if (device.vulnerabilities.isNotEmpty()) RedVulnerabilities else GreenVulnerabilities,
+                    color = if (device.vulnerabilities.isNotEmpty()) RedVulnerabilities else (if (!device.hasBeenScanned) GreyVulnerabilities else GreenVulnerabilities),
                     shape = RoundedCornerShape(extra_small_space),
                     modifier = Modifier
                         .padding(vertical = small_space)
@@ -203,7 +223,7 @@ fun DeviceInfoScreen(
                         .height(extra_large_space)
                 ) {
                     Text(
-                        text = "${device.vulnerabilities.size} vulnérabilité${if (device.vulnerabilities.size > 1) 's' else ""}",
+                        text = if (device.hasBeenScanned) "${device.vulnerabilities.size} vulnérabilité${if (device.vulnerabilities.size > 1) 's' else ""}" else "Lancer un scan pour voir les vulnérabilités",
                         textAlign = TextAlign.Center,
                         color = Color.White,
                         modifier = Modifier.padding(
