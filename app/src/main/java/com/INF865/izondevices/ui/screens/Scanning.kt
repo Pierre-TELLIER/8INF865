@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -188,6 +189,8 @@ fun ScanScreen(
                                 errorMessage = throwable.message ?: "Scan failed"
                             } else if (!future.isCancelled) {
                                 scan = Scan.fromNow(result)
+                                Toast.makeText(context, R.string.port_scan_finished, Toast.LENGTH_SHORT).show()
+                                onScanFinished(scan!!)
                             }
                         }
                     }

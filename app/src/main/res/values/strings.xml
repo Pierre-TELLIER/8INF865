@@ -12,7 +12,10 @@
     <string name="vulnerabilities_label">Vulnerabilités</string>
     <string name="actions_label">Actions</string>
     <string name="ping_label">Ping</string>
+    <string name="ping_toast_success">Device pinged successfully</string>
+    <string name="ping_toast_failure">Device unreachable</string>
     <string name="port_scan_label">Scanner</string>
+    <string name="port_scan_finished">Scan terminé</string>
     <string name="vulnerability_title">Vulnérabilité 1</string>
     <string name="description_label">Description</string>
     <string name="remediation_label">Remédiation</string>

@@ -139,7 +139,8 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
                 currentRoute?.startsWith("device_info") == true ||
                 currentRoute?.startsWith("cve") == true ||
                 currentRoute == NavScreen.Parametres.route ||
-                currentRoute == NavScreen.Historique.route
+                currentRoute == NavScreen.Historique.route ||
+                currentRoute == NavScreen.ScanHistory.route
             ) {
                 IzonBottomNavigation(
                     currentRoute = currentRoute,
@@ -255,7 +256,8 @@ fun IzonBottomNavigation(
         tonalElevation = elevation_none
     ) {
         NavigationBarItem(
-            selected = currentRoute == NavScreen.Historique.route,
+            selected = currentRoute == NavScreen.Historique.route ||
+                    currentRoute == NavScreen.ScanHistory.route,
             onClick = { onScreenSelected(NavScreen.Historique) },
             icon = { BottomNavIcon(menu = "history") },
             colors = NavigationBarItemDefaults.colors(

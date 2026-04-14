@@ -7,6 +7,7 @@ import android.content.ServiceConnection
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -161,6 +162,8 @@ fun DeviceInfoScreen(
                         }
 
                         device.hasBeenScanned = true
+
+                        Toast.makeText(context, R.string.port_scan_finished, Toast.LENGTH_SHORT).show()
 
                         // TODO : save latest device state to database
                     }
@@ -351,6 +354,8 @@ fun DeviceInfoScreen(
                                 val result = pingDevice(device)
                                 pingButtonColor.value =
                                     if (result) GreenVulnerabilities else RedVulnerabilities
+                                val toastText =  if (result) R.string.ping_toast_success else R.string.ping_toast_failure
+                                Toast.makeText(context, toastText, Toast.LENGTH_SHORT).show()
                             }
                         },
                         backgroundColor = pingButtonColor.value ?: CoralRed80Background
