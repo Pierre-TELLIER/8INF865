@@ -80,6 +80,7 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val prevRoute = navController.previousBackStackEntry?.destination?.route
 
     var latestScanResults by remember { mutableStateOf(mutableListOf<Scan>()) }
 
@@ -144,6 +145,7 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
             ) {
                 IzonBottomNavigation(
                     currentRoute = currentRoute,
+                    prevRoute = prevRoute,
                     onScreenSelected = { screen ->
                         navController.navigate(screen.route) {
                             popUpTo(navController.graph.startDestinationId) {
@@ -248,6 +250,7 @@ fun IzonDevicesApp(modifier: Modifier = Modifier) {
 fun IzonBottomNavigation(
     modifier: Modifier = Modifier,
     currentRoute: String?,
+    prevRoute: String?,
     onScreenSelected: (NavScreen) -> Unit
 ) {
     NavigationBar(
@@ -257,7 +260,8 @@ fun IzonBottomNavigation(
     ) {
         NavigationBarItem(
             selected = currentRoute == NavScreen.Historique.route ||
-                    currentRoute == NavScreen.ScanHistory.route,
+                    currentRoute == NavScreen.ScanHistory.route ||
+                    (currentRoute == NavScreen.DeviceInfo.route && (prevRoute == NavScreen.ScanHistory.route || prevRoute == NavScreen.Historique.route)),
             onClick = { onScreenSelected(NavScreen.Historique) },
             icon = { BottomNavIcon(menu = "history") },
             colors = NavigationBarItemDefaults.colors(
@@ -266,8 +270,9 @@ fun IzonBottomNavigation(
         )
         NavigationBarItem(
             selected = currentRoute == NavScreen.MainMenu.route ||
-                    currentRoute?.startsWith("device_info") == true ||
-                    currentRoute == NavScreen.CVE.route,
+                    (currentRoute?.startsWith("device_info") == true ||
+                    currentRoute == NavScreen.CVE.route) &&
+                !(currentRoute == NavScreen.DeviceInfo.route && (prevRoute == NavScreen.ScanHistory.route || prevRoute == NavScreen.Historique.route)),
             onClick = { onScreenSelected(NavScreen.MainMenu) },
             icon = { BottomNavIcon(menu = "home") },
             colors = NavigationBarItemDefaults.colors(
